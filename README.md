@@ -77,13 +77,14 @@ npm run build
 
 Copier ou synchroniser ensuite `dist/` vers le dossier exposé dans le conteneur Caddy, actuellement `/srv/geoformykids` du point de vue du conteneur.
 
-Le fichier [`deploy/Caddyfile.geoformykids`](deploy/Caddyfile.geoformykids) contient le bloc Caddy recommandé. Il doit être ajouté au Caddyfile existant de application existante sans remplacer le bloc `api.example.com`.
+Le fichier [`deploy/Caddyfile.geoformykids`](deploy/Caddyfile.geoformykids) contient un bloc Caddy recommandé. Le domaine et le chemin racine peuvent être adaptés au serveur utilisé. Si Caddy héberge déjà d’autres sites, leurs blocs doivent être conservés.
 
 Après la modification sur le VPS :
 
 ```bash
-sudo docker exec nom_du_conteneur_caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-sudo docker exec nom_du_conteneur_caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+export CADDY_CONTAINER=nom_du_conteneur_caddy
+sudo docker exec "$CADDY_CONTAINER" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+sudo docker exec "$CADDY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 
 Puis vérifier le site :
@@ -116,3 +117,7 @@ git push
 ```
 
 Il faut ensuite mettre à jour les fichiers de `dist/` servis par le VPS. Le navigateur récupérera la nouvelle page et remplacera progressivement son ancien cache PWA.
+
+## Licence
+
+GeoForMyKids est distribué sous [licence MIT](LICENSE). Le code peut être utilisé, modifié et redistribué à condition de conserver la notice de copyright et le texte de la licence.

@@ -1,5 +1,5 @@
-# Ajouter ce bloc au Caddyfile existant de application existante.
-# Ne pas remplacer le bloc api.example.com.
+# Exemple de site statique à ajouter à un Caddyfile existant.
+# Conserver les éventuels autres sites déjà configurés sur le serveur.
 geoformykids.duckdns.org {
 	root * /srv/geoformykids
 	encode zstd gzip

@@ -28,9 +28,18 @@ export function loadProfileRegistry(): ProfileRegistry {
       && profile.name.trim().length > 0
       && profile.name.trim().length <= 30
     ))
+    let requestedActiveId = localStorage.getItem(ACTIVE_PROFILE_KEY)
+    const existingDefaultProfile = profiles.find((profile) => profile.id === DEFAULT_PROFILE.id)
+
+    // Registries created before the neutral default profile used their first
+    // entry for the base storage keys. Migrating that entry preserves progress.
+    if (profiles.length && !existingDefaultProfile) {
+      const previousDefaultId = profiles[0].id
+      profiles[0] = DEFAULT_PROFILE
+      if (requestedActiveId === previousDefaultId) requestedActiveId = DEFAULT_PROFILE.id
+    }
     if (!profiles.length) profiles.push(DEFAULT_PROFILE)
 
-    const requestedActiveId = localStorage.getItem(ACTIVE_PROFILE_KEY)
     const activeProfileId = profiles.some((profile) => profile.id === requestedActiveId)
       ? requestedActiveId!
       : profiles[0].id

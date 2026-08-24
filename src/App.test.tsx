@@ -564,7 +564,7 @@ describe('GeoForMyKids game loop', () => {
     })
   })
 
-  it('keeps separate progress for Joueur 1 and every newly created profile', () => {
+  it('keeps separate progress for the default and every newly created profile', () => {
     completeTutorials()
     render(<App />)
 
@@ -591,6 +591,21 @@ describe('GeoForMyKids game loop', () => {
 
     const profiles = JSON.parse(localStorage.getItem('globidoo.profiles.v1')!)
     expect(profiles.map((profile: { name: string }) => profile.name)).toEqual(['Joueur 1', 'Joueur 2'])
+    expect(localStorage.getItem('globidoo.profile.active.v1')).toBe('default')
+  })
+
+  it('migrates an earlier default profile without losing its base progress', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.profiles.v1', JSON.stringify([{ id: 'former-default', name: 'Ancien profil' }]))
+    localStorage.setItem('globidoo.profile.active.v1', 'former-default')
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify({ FR: { encounters: 1, stage: 4 } }))
+
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /Ma planète/ }))
+
+    expect(screen.getByRole('button', { name: /Changer d’utilisateur/ })).toHaveTextContent('Profil : Joueur 1')
+    expect(document.querySelector<HTMLElement>('[data-country="FR"]')).toHaveClass('is-mastered')
+    expect(JSON.parse(localStorage.getItem('globidoo.profiles.v1')!)).toEqual([{ id: 'default', name: 'Joueur 1' }])
     expect(localStorage.getItem('globidoo.profile.active.v1')).toBe('default')
   })
 
