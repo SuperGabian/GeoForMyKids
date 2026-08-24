@@ -64,10 +64,17 @@ describe('GeoForMyKids game loop', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Océan Atlantique' }))
     expect(screen.getByText(/Tu as choisi/)).toHaveTextContent('océan Atlantique')
 
-    const oceanJourney = ['Pacifique', 'Atlantique', 'Indien', 'Arctique', 'Austral']
-    oceanJourney.forEach((ocean, index) => {
+    const oceanJourney = [
+      ['Pacifique', 'plus vaste que toutes les terres émergées'],
+      ['Atlantique', 'Son nom vient d’Atlas'],
+      ['Indien', 'parmi les plus chaudes'],
+      ['Arctique', 'le plus petit des cinq océans'],
+      ['Austral', 'le tour complet de la Terre'],
+    ]
+    oceanJourney.forEach(([ocean, fact], index) => {
       fireEvent.click(screen.getByRole('button', { name: `Océan ${ocean}` }))
       expect(screen.getByRole('heading', { name: `Océan ${ocean} !` })).toBeInTheDocument()
+      expect(document.querySelector('.tutorial-fact')).toHaveTextContent(fact)
       if (index === oceanJourney.length - 1) {
         expect(document.querySelector('.level-finale-visual')).toHaveTextContent('Les 5 océans découverts !')
       }
@@ -119,10 +126,20 @@ describe('GeoForMyKids game loop', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mer des Caraïbes' }))
     expect(screen.getByText(/Tu as choisi/)).toHaveTextContent('mer des Caraïbes')
 
-    const seaJourney = ['Méditerranée', 'des Caraïbes', 'Rouge', 'Noire', 'Baltique', 'du Nord', 'd’Arabie', 'de Chine méridionale']
-    seaJourney.forEach((sea, index) => {
+    const seaJourney = [
+      ['Méditerranée', 'détroit de Gibraltar'],
+      ['des Caraïbes', 'récif mésoaméricain'],
+      ['Rouge', 'Trichodesmium'],
+      ['Noire', 'manquent presque totalement d’oxygène'],
+      ['Baltique', 'Son eau est saumâtre'],
+      ['du Nord', 'Doggerland'],
+      ['d’Arabie', 'vents de mousson'],
+      ['de Chine méridionale', 'plus de 280 îles'],
+    ]
+    seaJourney.forEach(([sea, fact], index) => {
       fireEvent.click(screen.getByRole('button', { name: `Mer ${sea}` }))
       expect(screen.getByRole('heading', { name: `Mer ${sea} !` })).toBeInTheDocument()
+      expect(document.querySelector('.tutorial-fact')).toHaveTextContent(fact)
       if (index === seaJourney.length - 1) {
         expect(document.querySelector('.level-finale-visual')).toHaveTextContent('Les 8 mers découvertes !')
         expect(document.querySelectorAll('.success-celebration .particle')).toHaveLength(28)

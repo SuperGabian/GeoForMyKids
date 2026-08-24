@@ -727,12 +727,21 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                       <em>{continentTarget.continent === 'AN' ? 'Des scientifiques y séjournent temporairement.' : 'Estimation ONU · 2025'}</em>
                     </div>
                   </div>
-                  <div className="continent-fact">
+                  <div className="tutorial-fact">
                     <Lightbulb size={18} aria-hidden="true" />
                     <div>
                       <strong>Le savais-tu ?</strong>
                       <p>{continentTarget.fact}</p>
                     </div>
+                  </div>
+                </div>
+              ) : null}
+              {gameMode === 'oceans' || gameMode === 'seas' ? (
+                <div className="tutorial-fact is-standalone">
+                  <Lightbulb size={18} aria-hidden="true" />
+                  <div>
+                    <strong>Le savais-tu ?</strong>
+                    <p>{gameMode === 'oceans' ? oceanTarget.fact : seaTarget.fact}</p>
                   </div>
                 </div>
               ) : null}
