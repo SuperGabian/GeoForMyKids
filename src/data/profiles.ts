@@ -1,0 +1,46 @@
+export type PlayerProfile = {
+  id: string
+  name: string
+}
+
+export type ProfileRegistry = {
+  profiles: PlayerProfile[]
+  activeProfileId: string
+}
+
+export const DEFAULT_PROFILE: PlayerProfile = { id: 'default', name: 'Joueur 1' }
+export const PROFILES_KEY = 'globidoo.profiles.v1'
+export const ACTIVE_PROFILE_KEY = 'globidoo.profile.active.v1'
+
+export function profileStorageKey(baseKey: string, profileId: string) {
+  return profileId === DEFAULT_PROFILE.id ? baseKey : `${baseKey}.${profileId}`
+}
+
+export function loadProfileRegistry(): ProfileRegistry {
+  try {
+    const saved = localStorage.getItem(PROFILES_KEY)
+    const parsed = saved ? JSON.parse(saved) as PlayerProfile[] : []
+    const profiles = parsed.filter((profile) => (
+      typeof profile?.id === 'string'
+      && typeof profile?.name === 'string'
+      && profile.id.length > 0
+      && profile.name.trim().length > 0
+    ))
+    if (!profiles.length) profiles.push(DEFAULT_PROFILE)
+
+    const requestedActiveId = localStorage.getItem(ACTIVE_PROFILE_KEY)
+    const activeProfileId = profiles.some((profile) => profile.id === requestedActiveId)
+      ? requestedActiveId!
+      : profiles[0].id
+
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles))
+    localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId)
+    return { profiles, activeProfileId }
+  } catch {
+    return { profiles: [DEFAULT_PROFILE], activeProfileId: DEFAULT_PROFILE.id }
+  }
+}
+
+export function createProfileId() {
+  return `profile-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
+}

@@ -1,0 +1,36 @@
+{
+  "name": "geofmykids",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "data:countries": "node scripts/generate-country-catalog.mjs",
+    "data:populations": "node scripts/update-populations.mjs",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "d3-geo": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "topojson-client": "latest",
+    "vite": "latest",
+    "world-atlas": "latest"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "latest",
+    "@types/d3-geo": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/topojson-client": "latest",
+    "jsdom": "^26.1.0",
+    "typescript": "latest",
+    "vitest": "latest",
+    "world-countries": "^5.1.0"
+  }
+}

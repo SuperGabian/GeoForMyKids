@@ -1,0 +1,26 @@
+{
+  "name": "GeoForMyKids",
+  "short_name": "GeoForMyKids",
+  "description": "Le jeu éducatif qui aide les enfants à découvrir le monde un pays à la fois.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef8f6",
+  "theme_color": "#137b72",
+  "icons": [
+    {
+      "src": "/icons/geofmykids-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/geofmykids-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
