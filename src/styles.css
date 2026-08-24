@@ -628,7 +628,7 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .continent-oc { fill: var(--continent-oc); background: var(--continent-oc); }
 .continent-na { fill: var(--continent-na); background: var(--continent-na); }
 .continent-sa { fill: var(--continent-sa); background: var(--continent-sa); }
-.continent-an { fill: #d1dddc; background: #d1dddc; cursor: default; }
+.continent-an { fill: #d1dddc; background: #d1dddc; }
 
 .country-shape.is-wrong { animation: country-no .35s ease; filter: brightness(1.12); stroke: white; stroke-width: 2; }
 .country-shape.is-correct { fill: #ff7a2f; stroke: #fff; stroke-width: 3.2; filter: drop-shadow(0 5px 9px rgba(174, 73, 15, .45)); animation: country-yes .48s ease both; }
@@ -647,6 +647,9 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
   transform: none;
   animation: continent-yes .5s ease both;
 }
+.continent-learning-note { margin-top: 13px; padding: 12px 13px; border: 1px solid #a9d9cf; border-radius: 14px; color: #174f4a; background: #e8f7f3; }
+.continent-learning-note > strong { font-size: 12px; }
+.continent-learning-note > p { margin: 5px 0 0; font-size: 11px; line-height: 1.45; }
 .target-hit-area { fill: transparent; pointer-events: auto; cursor: pointer; }
 
 .map-tooltip {

@@ -22,7 +22,7 @@ type WorldMapProps = {
   targetIso: string
   targetName: string
   targetLabel: [number, number]
-  targetContinent: ContinentCode
+  targetContinent: ContinentCode | 'AN'
   targetOcean?: OceanCode
   targetSea?: SeaCode
   hintLevel: number
@@ -162,13 +162,14 @@ export function WorldMap({
       }
     }
 
-    const continentFocus: Record<ContinentCode, { coordinates: [number, number]; zoom: number; label: string }> = {
+    const continentFocus: Record<ContinentCode | 'AN', { coordinates: [number, number]; zoom: number; label: string }> = {
       EU: { coordinates: [14, 51], zoom: 2.8, label: 'Europe' },
       AS: { coordinates: [88, 34], zoom: 1.72, label: 'Asie' },
       AF: { coordinates: [20, 2], zoom: 1.92, label: 'Afrique' },
       OC: { coordinates: [143, -25], zoom: 1.72, label: 'Océanie' },
       NA: { coordinates: [-103, 40], zoom: 1.78, label: 'Amérique du Nord' },
       SA: { coordinates: [-61, -19], zoom: 2.02, label: 'Amérique du Sud' },
+      AN: { coordinates: [0, -80], zoom: 1.5, label: 'Antarctique' },
     }
     const continent = continentFocus[targetContinent]
 
@@ -436,7 +437,8 @@ export function WorldMap({
             ].filter(Boolean).join(' ')
 
             const select = () => {
-              if (gameMode !== 'oceans' && gameMode !== 'seas' && !disabled && country.iso2 !== 'AQ') onSelect(country.iso2, country.name, country.continent)
+              const antarcticaIsSelectable = country.iso2 !== 'AQ' || gameMode === 'continents'
+              if (gameMode !== 'oceans' && gameMode !== 'seas' && !disabled && antarcticaIsSelectable) onSelect(country.iso2, country.name, country.continent)
             }
 
             return (
@@ -444,10 +446,10 @@ export function WorldMap({
                 key={country.numericId}
                 d={path(country.geometry) ?? ''}
                 className={className}
-                tabIndex={disabled || country.iso2 === 'AQ' || gameMode === 'oceans' || gameMode === 'seas' ? -1 : 0}
+                tabIndex={disabled || (country.iso2 === 'AQ' && gameMode !== 'continents') || gameMode === 'oceans' || gameMode === 'seas' ? -1 : 0}
                 role={gameMode === 'oceans' || gameMode === 'seas' ? 'presentation' : 'button'}
                 aria-label={gameMode === 'oceans' || gameMode === 'seas' ? undefined : country.name}
-                aria-disabled={disabled || gameMode === 'oceans' || gameMode === 'seas'}
+                aria-disabled={disabled || (country.iso2 === 'AQ' && gameMode !== 'continents') || gameMode === 'oceans' || gameMode === 'seas'}
                 onMouseEnter={() => {
                   setHoveredCountryIso(country.iso2)
                   if (gameMode === 'continents') setHoveredContinent(country.continent)

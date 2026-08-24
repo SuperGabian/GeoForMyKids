@@ -8,12 +8,12 @@ describe('GeoForMyKids game loop', () => {
   afterEach(() => vi.useRealTimers())
 
   const completeTutorials = () => {
-    localStorage.setItem('globidoo.tutorial.completed.v1', 'true')
+    localStorage.setItem('globidoo.tutorial.completed.v2', 'true')
     localStorage.setItem('globidoo.ocean-tutorial.completed.v1', 'true')
     localStorage.setItem('globidoo.sea-tutorial.completed.v1', 'true')
   }
 
-  it('teaches the six continents and five oceans before unlocking countries', () => {
+  it('teaches the six continents including Antarctica and five oceans before unlocking countries', () => {
     render(<App />)
 
     expect(screen.getByText('Niveau 0 · Continent 1 sur 6')).toBeInTheDocument()
@@ -37,11 +37,16 @@ describe('GeoForMyKids game loop', () => {
       ['Australie', 'Océanie !'],
       ['États-Unis', 'Amérique du Nord !'],
       ['Brésil', 'Amérique du Sud !'],
+      ['Antarctique', 'Antarctique !'],
     ]
 
     journey.forEach(([country, continent], index) => {
       fireEvent.click(screen.getByRole('button', { name: country }))
       expect(screen.getByRole('heading', { name: continent })).toBeInTheDocument()
+      if (country === 'États-Unis' || country === 'Brésil') {
+        expect(screen.getByText('À retenir : une seule Amérique')).toBeInTheDocument()
+        expect(screen.getByText(/deux grandes parties d’un même continent/)).toBeInTheDocument()
+      }
       if (index === journey.length - 1) {
         expect(document.querySelector('.level-finale-visual')).toBeInTheDocument()
         expect(document.querySelectorAll('.success-celebration .particle')).toHaveLength(28)
@@ -67,14 +72,25 @@ describe('GeoForMyKids game loop', () => {
       fireEvent.click(screen.getByRole('button', { name: index === oceanJourney.length - 1 ? /Chercher les pays/ : /Océan suivant/ }))
     })
 
-    expect(localStorage.getItem('globidoo.tutorial.completed.v1')).toBe('true')
+    expect(localStorage.getItem('globidoo.tutorial.completed.v2')).toBe('true')
     expect(localStorage.getItem('globidoo.ocean-tutorial.completed.v1')).toBe('true')
     expect(screen.getByRole('heading', { name: 'France' })).toBeInTheDocument()
     expect(screen.getByLabelText('Couleurs des continents')).toBeInTheDocument()
   })
 
-  it('teaches the major seas between country levels 2 and 3', () => {
+  it('reopens the expanded continent tutorial for profiles that completed the old version', () => {
     localStorage.setItem('globidoo.tutorial.completed.v1', 'true')
+    localStorage.setItem('globidoo.ocean-tutorial.completed.v1', 'true')
+    localStorage.setItem('globidoo.sea-tutorial.completed.v1', 'true')
+
+    render(<App />)
+
+    expect(screen.getByText('Niveau 0 · Continent 1 sur 6')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Europe' })).toBeInTheDocument()
+  })
+
+  it('teaches the major seas between country levels 2 and 3', () => {
+    localStorage.setItem('globidoo.tutorial.completed.v2', 'true')
     localStorage.setItem('globidoo.ocean-tutorial.completed.v1', 'true')
     localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
       countries
