@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ArrowLeft, Check, Compass, Download, LockKeyhole, Smartphone, Sparkles, UserPlus, UsersRound } from 'lucide-react'
+import { ArrowLeft, Check, Compass, Download, LockKeyhole, PencilLine, Smartphone, Sparkles, UserPlus, UsersRound } from 'lucide-react'
 import { continentLabels, countries, countryDifficultyLevels, countryLevelNames, type ContinentCode } from '../data/countries'
 import type { PlayerProfile } from '../data/profiles'
 import { fr } from '../i18n/fr'
@@ -18,15 +18,18 @@ type ProgressViewProps = {
   onClose: () => void
   onSelectProfile: (profileId: string) => void
   onCreateProfile: (name: string) => void
+  onRenameProfile: (profileId: string, name: string) => void
   canInstallApp: boolean
   isAppInstalled: boolean
   onInstallApp: () => Promise<boolean>
 }
 
-export function ProgressView({ progress, activeProfile, profiles, onClose, onSelectProfile, onCreateProfile, canInstallApp, isAppInstalled, onInstallApp }: ProgressViewProps) {
+export function ProgressView({ progress, activeProfile, profiles, onClose, onSelectProfile, onCreateProfile, onRenameProfile, canInstallApp, isAppInstalled, onInstallApp }: ProgressViewProps) {
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false)
   const [newProfileName, setNewProfileName] = useState('')
   const [profileError, setProfileError] = useState('')
+  const [renamedProfileName, setRenamedProfileName] = useState(activeProfile.name)
+  const [renameError, setRenameError] = useState('')
   const [showInstallHelp, setShowInstallHelp] = useState(false)
   const discovered = countries.filter((country) => progress[country.iso2]?.encounters)
   const mastered = countries.filter((country) => {
@@ -58,6 +61,22 @@ export function ProgressView({ progress, activeProfile, profiles, onClose, onSel
     onCreateProfile(name)
   }
 
+  const submitProfileRename = (event: FormEvent) => {
+    event.preventDefault()
+    const name = renamedProfileName.trim()
+    if (!name) {
+      setRenameError('Choisis un pseudo.')
+      return
+    }
+    if (profiles.some((profile) => profile.id !== activeProfile.id && profile.name.toLocaleLowerCase('fr') === name.toLocaleLowerCase('fr'))) {
+      setRenameError('Ce nom de profil existe déjà.')
+      return
+    }
+    onRenameProfile(activeProfile.id, name)
+    setRenamedProfileName(name)
+    setRenameError('')
+  }
+
   const installApplication = async () => {
     if (isAppInstalled) return
     const promptWasShown = await onInstallApp()
@@ -70,7 +89,11 @@ export function ProgressView({ progress, activeProfile, profiles, onClose, onSel
         <button className="text-button back-button" onClick={onClose} type="button">
           <ArrowLeft size={19} />{fr.close}
         </button>
-        <button className="profile-switch-button" type="button" onClick={() => setShowProfileSwitcher(true)}>
+        <button className="profile-switch-button" type="button" onClick={() => {
+          setRenamedProfileName(activeProfile.name)
+          setRenameError('')
+          setShowProfileSwitcher(true)
+        }}>
           <UsersRound size={20} />
           <span><small>Profil : {activeProfile.name}</small><strong>Changer d’utilisateur</strong></span>
         </button>
@@ -198,6 +221,25 @@ export function ProgressView({ progress, activeProfile, profiles, onClose, onSel
                 )
               })}
             </div>
+
+            <form className="rename-profile-form" onSubmit={submitProfileRename}>
+              <label htmlFor="rename-profile-name"><PencilLine size={17} />Personnaliser mon pseudo</label>
+              <div>
+                <input
+                  id="rename-profile-name"
+                  type="text"
+                  value={renamedProfileName}
+                  maxLength={30}
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setRenamedProfileName(event.target.value)
+                    setRenameError('')
+                  }}
+                />
+                <button type="submit">Enregistrer</button>
+              </div>
+              {renameError ? <p role="alert">{renameError}</p> : <small>Ta progression sera conservée.</small>}
+            </form>
 
             <form className="new-profile-form" onSubmit={submitNewProfile}>
               <label htmlFor="new-profile-name"><UserPlus size={17} />Créer un profil</label>

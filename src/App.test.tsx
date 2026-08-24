@@ -594,6 +594,26 @@ describe('GeoForMyKids game loop', () => {
     expect(localStorage.getItem('globidoo.profile.active.v1')).toBe('default')
   })
 
+  it('lets Joueur 1 personalize their name without losing progress', () => {
+    completeTutorials()
+    const { unmount } = render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'France' }))
+    fireEvent.click(screen.getByRole('button', { name: /Ma planète/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Changer d’utilisateur/ }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Personnaliser mon pseudo' }), { target: { value: 'Exploratrice' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    expect(screen.getByRole('button', { name: 'Profil actuel : Exploratrice' })).toBeDisabled()
+    expect(JSON.parse(localStorage.getItem('globidoo.profiles.v1')!)).toEqual([{ id: 'default', name: 'Exploratrice' }])
+
+    unmount()
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /Ma planète/ }))
+    expect(screen.getByRole('button', { name: /Changer d’utilisateur/ })).toHaveTextContent('Profil : Exploratrice')
+    expect(document.querySelector<HTMLElement>('[data-country="FR"]')).toHaveClass('is-mastered')
+  })
+
   it('migrates an earlier default profile without losing its base progress', () => {
     completeTutorials()
     localStorage.setItem('globidoo.profiles.v1', JSON.stringify([{ id: 'former-default', name: 'Ancien profil' }]))

@@ -1338,14 +1338,15 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .profile-list strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .profile-list small { margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 750; }
 .profile-list svg { color: var(--teal); }
-.new-profile-form { margin-top: 18px; padding-top: 17px; border-top: 1px solid var(--border); text-align: left; }
-.new-profile-form > label { display: flex; align-items: center; gap: 7px; color: var(--ink); font-size: 12px; font-weight: 850; }
-.new-profile-form > label svg { color: var(--teal); }
-.new-profile-form > div { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 9px; }
-.new-profile-form input { width: 100%; min-width: 0; height: 43px; padding: 0 12px; border: 1px solid #cddfdb; border-radius: 12px; color: var(--ink); background: white; outline: none; }
-.new-profile-form input:focus { border-color: #55ad96; box-shadow: 0 0 0 3px rgba(39, 157, 126, .12); }
-.new-profile-form button { min-width: 82px; padding: 0 15px; border: 0; border-radius: 12px; color: white; background: var(--teal); cursor: pointer; font-weight: 850; }
-.new-profile-form > p { margin: 7px 2px 0; color: #b64a3f; font-size: 10px; font-weight: 750; }
+.rename-profile-form, .new-profile-form { margin-top: 18px; padding-top: 17px; border-top: 1px solid var(--border); text-align: left; }
+.rename-profile-form > label, .new-profile-form > label { display: flex; align-items: center; gap: 7px; color: var(--ink); font-size: 12px; font-weight: 850; }
+.rename-profile-form > label svg, .new-profile-form > label svg { color: var(--teal); }
+.rename-profile-form > div, .new-profile-form > div { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 9px; }
+.rename-profile-form input, .new-profile-form input { width: 100%; min-width: 0; height: 43px; padding: 0 12px; border: 1px solid #cddfdb; border-radius: 12px; color: var(--ink); background: white; outline: none; }
+.rename-profile-form input:focus, .new-profile-form input:focus { border-color: #55ad96; box-shadow: 0 0 0 3px rgba(39, 157, 126, .12); }
+.rename-profile-form button, .new-profile-form button { min-width: 82px; padding: 0 15px; border: 0; border-radius: 12px; color: white; background: var(--teal); cursor: pointer; font-weight: 850; }
+.rename-profile-form > p, .new-profile-form > p { margin: 7px 2px 0; color: #b64a3f; font-size: 10px; font-weight: 750; }
+.rename-profile-form > small { display: block; margin: 7px 2px 0; color: var(--muted); font-size: 10px; }
 .profile-switcher-cancel { margin: 18px auto 0; }
 
 @keyframes hint-in { from { opacity: 0; transform: translateY(-5px); } }

@@ -223,6 +223,7 @@ type ProfileGameProps = {
   profiles: PlayerProfile[]
   onSelectProfile: (profileId: string) => void
   onCreateProfile: (name: string) => void
+  onRenameProfile: (profileId: string, name: string) => void
   canInstallApp: boolean
   isAppInstalled: boolean
   onInstallApp: () => Promise<boolean>
@@ -249,6 +250,16 @@ export default function App() {
     localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles))
     localStorage.setItem(ACTIVE_PROFILE_KEY, profile.id)
     setProfileRegistry({ profiles, activeProfileId: profile.id })
+  }
+
+  const renameProfile = (profileId: string, rawName: string) => {
+    const name = rawName.trim().slice(0, 30)
+    if (!name || !profileRegistry.profiles.some((profile) => profile.id === profileId)) return
+    const profiles = profileRegistry.profiles.map((profile) => (
+      profile.id === profileId ? { ...profile, name } : profile
+    ))
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles))
+    setProfileRegistry((registry) => ({ ...registry, profiles }))
   }
 
   useEffect(() => {
@@ -283,6 +294,7 @@ export default function App() {
       profiles={profileRegistry.profiles}
       onSelectProfile={selectProfile}
       onCreateProfile={createProfile}
+      onRenameProfile={renameProfile}
       canInstallApp={Boolean(installPrompt)}
       isAppInstalled={isAppInstalled}
       onInstallApp={installApp}
@@ -290,7 +302,7 @@ export default function App() {
   )
 }
 
-function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile, canInstallApp, isAppInstalled, onInstallApp }: ProfileGameProps) {
+function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile, onRenameProfile, canInstallApp, isAppInstalled, onInstallApp }: ProfileGameProps) {
   const [screen, setScreen] = useState<'game' | 'progress'>('game')
   const [progress, setProgress] = useState<CountryProgress>(() => loadProgress(activeProfile.id))
   const [gameMode, setGameMode] = useState<GameMode>(() => initialMode(progress, activeProfile.id))
@@ -647,6 +659,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
         onClose={() => setScreen('game')}
         onSelectProfile={onSelectProfile}
         onCreateProfile={onCreateProfile}
+        onRenameProfile={onRenameProfile}
         canInstallApp={canInstallApp}
         isAppInstalled={isAppInstalled}
         onInstallApp={onInstallApp}
