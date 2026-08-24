@@ -1,9 +1,10 @@
-const CACHE_NAME = 'geofmykids-shell-v1'
+const CACHE_NAME = 'geofmykids-shell-v2'
 const APP_SHELL = ['/manifest.webmanifest', '/icons/geofmykids-192.png', '/icons/geofmykids-512.png']
 
 async function cacheApplication() {
   const cache = await caches.open(CACHE_NAME)
   const homeResponse = await fetch('/')
+  if (!homeResponse.ok) throw new Error(`Unable to cache the application shell (${homeResponse.status})`)
   await cache.put('/', homeResponse.clone())
 
   const html = await homeResponse.text()
@@ -25,20 +26,29 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return
+  if (event.request.method !== 'GET') return
+
+  const requestUrl = new URL(event.request.url)
+  if (requestUrl.origin !== self.location.origin) return
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const copy = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put('/', copy))
+          const isHtml = response.headers.get('content-type')?.includes('text/html')
+          if (response.ok && isHtml) {
+            const copy = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put('/', copy))
+          }
           return response
         })
         .catch(() => caches.match('/')),
     )
     return
   }
+
+  const isCacheableAsset = requestUrl.pathname.startsWith('/assets/') || APP_SHELL.includes(requestUrl.pathname)
+  if (!isCacheableAsset) return
 
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {

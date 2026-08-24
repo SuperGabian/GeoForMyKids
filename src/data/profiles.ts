@@ -24,7 +24,9 @@ export function loadProfileRegistry(): ProfileRegistry {
       typeof profile?.id === 'string'
       && typeof profile?.name === 'string'
       && profile.id.length > 0
+      && profile.id.length <= 80
       && profile.name.trim().length > 0
+      && profile.name.trim().length <= 30
     ))
     if (!profiles.length) profiles.push(DEFAULT_PROFILE)
 
@@ -42,5 +44,5 @@ export function loadProfileRegistry(): ProfileRegistry {
 }
 
 export function createProfileId() {
-  return `profile-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
+  return `profile-${crypto.randomUUID()}`
 }

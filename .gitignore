@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Local build and test caches
+.vite/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and editor files
+*.log
+.DS_Store
+.idea/
+.vscode/
+

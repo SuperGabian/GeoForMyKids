@@ -12,25 +12,25 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "d3-geo": "latest",
-    "lucide-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "topojson-client": "latest",
-    "vite": "latest",
-    "world-atlas": "latest"
+    "d3-geo": "3.1.1",
+    "lucide-react": "1.33.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "topojson-client": "3.1.0",
+    "world-atlas": "2.0.2"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "latest",
-    "@types/d3-geo": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "@types/topojson-client": "latest",
-    "jsdom": "^26.1.0",
-    "typescript": "latest",
-    "vitest": "latest",
-    "world-countries": "^5.1.0"
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/d3-geo": "3.1.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@types/topojson-client": "3.1.5",
+    "@vitejs/plugin-react": "6.1.0",
+    "jsdom": "26.1.0",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "4.1.11",
+    "world-countries": "5.1.0"
   }
 }

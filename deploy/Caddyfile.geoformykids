@@ -1,0 +1,30 @@
+# Ajouter ce bloc au Caddyfile existant de application existante.
+# Ne pas remplacer le bloc api.example.com.
+geoformykids.duckdns.org {
+	root * /srv/geoformykids
+	encode zstd gzip
+
+	# Les pages de la SPA retombent sur index.html.
+	try_files {path} /index.html
+
+	@service_worker path /sw.js
+	header @service_worker Cache-Control "no-cache"
+
+	@html path / /index.html
+	header @html Cache-Control "no-cache"
+
+	@versioned_assets path /assets/*
+	header @versioned_assets Cache-Control "public, max-age=31536000, immutable"
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	file_server
+}
