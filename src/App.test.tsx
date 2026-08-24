@@ -31,18 +31,20 @@ describe('GeoForMyKids game loop', () => {
     expect(screen.getByText(/Tu as choisi/)).toHaveTextContent('Asie')
 
     const journey = [
-      ['France', 'Europe !'],
-      ['Japon', 'Asie !'],
-      ['Égypte', 'Afrique !'],
-      ['Australie', 'Océanie !'],
-      ['États-Unis', 'Amérique du Nord !'],
-      ['Brésil', 'Amérique du Sud !'],
-      ['Antarctique', 'Antarctique !'],
+      ['France', 'Europe !', 'Environ 744 millions'],
+      ['Japon', 'Asie !', 'Environ 4,84 milliards'],
+      ['Égypte', 'Afrique !', 'Environ 1,55 milliard'],
+      ['Australie', 'Océanie !', 'Environ 47 millions'],
+      ['États-Unis', 'Amérique du Nord !', 'Environ 1,06 milliard sur l’ensemble de l’Amérique'],
+      ['Brésil', 'Amérique du Sud !', 'Environ 1,06 milliard sur l’ensemble de l’Amérique'],
+      ['Antarctique', 'Antarctique !', 'Aucun habitant permanent'],
     ]
 
-    journey.forEach(([country, continent], index) => {
+    journey.forEach(([country, continent, population], index) => {
       fireEvent.click(screen.getByRole('button', { name: country }))
       expect(screen.getByRole('heading', { name: continent })).toBeInTheDocument()
+      expect(document.querySelector('.continent-discovery-details')).toHaveTextContent(population)
+      expect(document.querySelector('.continent-discovery-details')).toHaveTextContent('Le savais-tu ?')
       if (country === 'États-Unis' || country === 'Brésil') {
         expect(screen.getByText('À retenir : une seule Amérique')).toBeInTheDocument()
         expect(screen.getByText(/deux grandes parties d’un même continent/)).toBeInTheDocument()

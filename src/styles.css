@@ -650,6 +650,19 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .continent-learning-note { margin-top: 13px; padding: 12px 13px; border: 1px solid #a9d9cf; border-radius: 14px; color: #174f4a; background: #e8f7f3; }
 .continent-learning-note > strong { font-size: 12px; }
 .continent-learning-note > p { margin: 5px 0 0; font-size: 11px; line-height: 1.45; }
+.continent-discovery-details { display: grid; gap: 8px; margin-top: 14px; text-align: left; }
+.continent-population,
+.continent-fact { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 12px 13px; border-radius: 14px; }
+.continent-population { color: #174f4a; background: #e7f6f1; }
+.continent-population > span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; color: white; background: var(--teal); }
+.continent-population > div { min-width: 0; display: flex; flex-direction: column; }
+.continent-population small { color: #5b7e78; font-size: 9px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; }
+.continent-population strong { margin-top: 3px; overflow-wrap: anywhere; font-size: 13px; line-height: 1.3; }
+.continent-population em { margin-top: 3px; color: #64847f; font-size: 9px; font-style: normal; font-weight: 650; }
+.continent-fact { color: #704f24; background: #fff4dc; }
+.continent-fact > svg { margin-top: 1px; color: #cf7920; }
+.continent-fact strong { font-size: 11px; }
+.continent-fact p { margin: 4px 0 0; font-size: 11px; line-height: 1.48; }
 .target-hit-area { fill: transparent; pointer-events: auto; cursor: pointer; }
 
 .map-tooltip {

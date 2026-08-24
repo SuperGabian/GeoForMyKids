@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, ChevronRight, Globe2, Lightbulb, Map, RotateCcw, Sparkles } from 'lucide-react'
+import { ArrowRight, ChevronRight, Globe2, Lightbulb, Map, RotateCcw, Sparkles, Users } from 'lucide-react'
 import { WorldMap } from './components/WorldMap'
 import { SuccessCard } from './components/SuccessCard'
 import { ProgressView, type CountryProgress } from './components/ProgressView'
@@ -37,6 +37,39 @@ type ContinentTarget = {
   continent: TutorialContinentCode
   continentName: string
   label: [number, number]
+  population: string
+  fact: string
+}
+
+const continentDetails: Record<TutorialContinentCode, Pick<ContinentTarget, 'population' | 'fact'>> = {
+  EU: {
+    population: 'Environ 744 millions',
+    fact: 'L’Europe et l’Asie forment une seule immense masse terrestre appelée Eurasie. Leur frontière est une convention géographique.',
+  },
+  AS: {
+    population: 'Environ 4,84 milliards',
+    fact: 'Les quatorze plus hautes montagnes de la planète se trouvent toutes en Asie.',
+  },
+  AF: {
+    population: 'Environ 1,55 milliard',
+    fact: 'L’Afrique est le berceau de l’humanité. C’est sur ce continent que l’homo sapiens a évolué il y a environ 300 000 ans.',
+  },
+  OC: {
+    population: 'Environ 47 millions',
+    fact: 'L’Océanie réunit l’Australie, qui est en fait un continent à part entière, et des milliers d’îles dispersées dans l’océan Pacifique.',
+  },
+  NA: {
+    population: 'Environ 1,06 milliard sur l’ensemble de l’Amérique',
+    fact: 'L’Amérique s’étire des régions arctiques jusqu’aux portes de l’Antarctique et traverse presque toutes les zones climatiques.',
+  },
+  SA: {
+    population: 'Environ 1,06 milliard sur l’ensemble de l’Amérique',
+    fact: 'L’Amérique s’étire des régions arctiques jusqu’aux portes de l’Antarctique et traverse presque toutes les zones climatiques.',
+  },
+  AN: {
+    population: 'Aucun habitant permanent',
+    fact: 'L’Antarctique est le continent le plus froid, le plus sec et le plus venteux de la planète.',
+  },
 }
 
 const continentTargets: ContinentTarget[] = [
@@ -48,9 +81,17 @@ const continentTargets: ContinentTarget[] = [
       continent: country.continent,
       continentName: country.continentName,
       label: country.label,
+      ...continentDetails[country.continent],
     }
   }),
-  { iso2: 'AQ', name: 'Antarctique', continent: 'AN', continentName: 'Antarctique', label: [0, -80] },
+  {
+    iso2: 'AQ',
+    name: 'Antarctique',
+    continent: 'AN',
+    continentName: 'Antarctique',
+    label: [0, -80],
+    ...continentDetails.AN,
+  },
 ]
 
 type GameMode = 'continents' | 'oceans' | 'seas' | 'country'
@@ -676,6 +717,25 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
               <span className="eyebrow">{gameMode === 'continents' ? 'Continent découvert' : gameMode === 'oceans' ? 'Océan découvert' : 'Mer découverte'}</span>
               <h2>{gameMode === 'continents' ? continentTarget.continentName : gameMode === 'oceans' ? `Océan ${oceanTarget.name}` : `Mer ${seaTarget.name}`} !</h2>
               <p>Tu sais maintenant où se trouve <strong>{gameMode === 'continents' ? `l’${continentTarget.continentName}` : gameMode === 'oceans' ? oceanTarget.articleName : seaTarget.articleName}</strong> sur la carte.</p>
+              {gameMode === 'continents' ? (
+                <div className="continent-discovery-details">
+                  <div className="continent-population">
+                    <span aria-hidden="true"><Users size={18} /></span>
+                    <div>
+                      <small>Population</small>
+                      <strong>{continentTarget.population}</strong>
+                      <em>{continentTarget.continent === 'AN' ? 'Des scientifiques y séjournent temporairement.' : 'Estimation ONU · 2025'}</em>
+                    </div>
+                  </div>
+                  <div className="continent-fact">
+                    <Lightbulb size={18} aria-hidden="true" />
+                    <div>
+                      <strong>Le savais-tu ?</strong>
+                      <p>{continentTarget.fact}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               {gameMode === 'continents' && (continentTarget.continent === 'NA' || continentTarget.continent === 'SA') ? (
                 <div className="continent-learning-note">
                   <strong>À retenir : une seule Amérique</strong>
