@@ -30,7 +30,7 @@ Node.js 22 est recommandé.
 
 ```bash
 git clone <adresse-du-depot>
-cd Globidoo
+cd GeoForMyKids
 npm ci
 npm run dev
 ```
