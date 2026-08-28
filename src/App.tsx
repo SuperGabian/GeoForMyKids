@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, ChevronRight, Globe2, Lightbulb, Map, RotateCcw, Sparkles, Users } from 'lucide-react'
 import { WorldMap } from './components/WorldMap'
 import { SuccessCard } from './components/SuccessCard'
+import { CountryFlag } from './components/CountryFlag'
 import { ProgressView, type CountryProgress } from './components/ProgressView'
 import {
   continentLabels,
@@ -9,7 +10,6 @@ import {
   countryByIso,
   countryDifficultyLevels,
   countryLevelNames,
-  flagFromIso,
   type ContinentCode,
   type Country,
 } from './data/countries'
@@ -441,9 +441,10 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     const previous = progress[countryTarget.iso2]
     const struggled = wrongAnswers.length >= 2
     const isScheduledReview = Boolean(reviewSession && !replaySession)
-    const needsReview = isScheduledReview ? struggled : Boolean(previous?.needsReview || struggled)
+    const reviewNeedsAnotherPass = isScheduledReview && wrongAnswers.length > 0
+    const needsReview = isScheduledReview ? reviewNeedsAnotherPass : Boolean(previous?.needsReview || struggled)
     const nextReviewLevel = isScheduledReview
-      ? struggled ? reviewSession!.completedLevel + 1 : undefined
+      ? reviewNeedsAnotherPass ? reviewSession!.completedLevel + 1 : undefined
       : struggled ? replaySession?.returnLevel ?? countryTarget.difficulty : previous?.nextReviewLevel
     const nextStage = wrongAnswers.length === 0
       ? Math.max(3, previous?.stage ?? 0)
@@ -462,7 +463,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
 
     setRemembered(Boolean(previous && wrongAnswers.length === 0))
     setAppreciation(isScheduledReview
-      ? struggled ? 'On y reviendra !' : 'C’est acquis !'
+      ? reviewNeedsAnotherPass ? 'On y reviendra !' : 'C’est acquis !'
       : appreciationFor(quality))
     setProgress(nextProgress)
     localStorage.setItem(profileStorageKey(STORAGE_KEY, activeProfile.id), JSON.stringify(nextProgress))
@@ -812,7 +813,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
               {gameMode !== 'country' ? (
                 <span className="map-target-globe" aria-hidden="true"><Globe2 size={29} /></span>
               ) : (
-                <span className="map-target-flag" role="img" aria-label={`Drapeau de ${countryTarget.name}`}>{countryTarget.flag}</span>
+                <span className="map-target-flag"><CountryFlag iso2={countryTarget.iso2} name={countryTarget.name} /></span>
               )}
               <div>
                 <span className="eyebrow">{gameMode === 'continents'
@@ -830,7 +831,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
               </div>
               {gameMode === 'country' && lastWrongAnswer ? (
                 <div className="map-wrong-choice" key={`${lastWrongAnswer.iso2}-${wrongAnswers.length}`} aria-live="polite">
-                  <span role="img" aria-label={`Drapeau de ${lastWrongAnswer.name}`}>{flagFromIso(lastWrongAnswer.iso2)}</span>
+                  <span><CountryFlag iso2={lastWrongAnswer.iso2} name={lastWrongAnswer.name} /></span>
                   <div><small>Tu as choisi</small><strong>{lastWrongAnswer.name}</strong></div>
                   <p>Observe le nouvel indice et réessaie.</p>
                 </div>
@@ -849,7 +850,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
             <div className="map-answer-banner"><span>🌍</span><strong>Tous les pays disponibles ont été découverts</strong></div>
           ) : (
             <div className="map-answer-banner">
-              <span>{gameMode !== 'country' ? <Globe2 size={25} /> : countryTarget.flag}</span>
+              <span>{gameMode !== 'country' ? <Globe2 size={25} /> : <CountryFlag iso2={countryTarget.iso2} name={countryTarget.name} />}</span>
               <strong>{gameMode === 'continents' ? `${continentTarget.continentName} ${continentTarget.continent === 'AN' ? 'trouvé' : 'trouvée'} !` : gameMode === 'oceans' ? `Océan ${oceanTarget.name} trouvé !` : gameMode === 'seas' ? `Mer ${seaTarget.name} trouvée !` : `${countryTarget.name} trouvé !`}</strong>
             </div>
           )}

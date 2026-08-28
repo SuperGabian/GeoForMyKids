@@ -3,6 +3,7 @@ import { ArrowLeft, Check, Compass, Download, LockKeyhole, PencilLine, Smartphon
 import { continentLabels, countries, countryDifficultyLevels, countryLevelNames, type ContinentCode } from '../data/countries'
 import type { PlayerProfile } from '../data/profiles'
 import { fr } from '../i18n/fr'
+import { CountryFlag } from './CountryFlag'
 
 export type CountryProgress = Record<string, {
   encounters: number
@@ -175,12 +176,14 @@ export function ProgressView({ progress, activeProfile, profiles, onClose, onSel
                         {continentCountries.map((country) => {
                           const item = progress[country.iso2]
                           const isMastered = Boolean(item && item.stage >= 3 && !item.needsReview)
+                          const isDiscovered = Boolean(item && !item.needsReview && !isMastered)
                           return (
-                            <article className={`passport-country ${item ? 'is-discovered' : ''} ${item?.needsReview ? 'needs-review' : ''} ${isMastered ? 'is-mastered' : ''}`} data-country={country.iso2} key={country.iso2}>
-                              <span className="passport-flag" aria-hidden="true">{item ? country.flag : <LockKeyhole size={18} />}</span>
+                            <article className={`passport-country ${item ? 'is-discovered' : ''} ${isDiscovered ? 'is-learning' : ''} ${item?.needsReview ? 'needs-review' : ''} ${isMastered ? 'is-mastered' : ''}`} data-country={country.iso2} key={country.iso2}>
+                              <span className="passport-flag" aria-hidden="true">{item ? <CountryFlag iso2={country.iso2} decorative /> : <LockKeyhole size={18} />}</span>
                               <div><strong>{item ? country.name : 'À découvrir'}</strong><span>{item ? `${item.encounters} rencontre${item.encounters > 1 ? 's' : ''}` : continentLabels[country.continent]}</span></div>
                               {item?.needsReview ? <span className="review-status">À réviser</span> : null}
                               {isMastered ? <span className="mastery-status" title="Bien connu">✓ Bien connu</span> : null}
+                              {isDiscovered ? <span className="learning-status" title="Pays découvert">Découvert</span> : null}
                             </article>
                           )
                         })}

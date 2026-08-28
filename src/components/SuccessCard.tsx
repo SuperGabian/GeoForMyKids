@@ -1,6 +1,7 @@
 import { ArrowRight, BookOpen, Languages, Landmark, UsersRound } from 'lucide-react'
 import type { Country } from '../data/countries'
 import { fr } from '../i18n/fr'
+import { CountryFlag } from './CountryFlag'
 
 type SuccessCardProps = {
   country: Country
@@ -22,7 +23,7 @@ export function SuccessCard({ country, appreciation, remembered, onNext, nextLab
       </div>
 
       <div className="country-title">
-        <span className="big-flag" role="img" aria-label={`Drapeau du ${country.name}`}>{country.flag}</span>
+        <CountryFlag iso2={country.iso2} name={country.name} className="big-flag" />
         <div><strong>{country.name}</strong><span>{country.continentName}</span></div>
       </div>
 

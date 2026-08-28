@@ -5,7 +5,8 @@ import type { Feature, FeatureCollection, Geometry } from 'geojson'
 import { Maximize2, Minus, Plus, RotateCcw } from 'lucide-react'
 import worldTopology from 'world-atlas/countries-110m.json'
 import mapMetadata from '../data/map-countries.json'
-import { countryByNumericId, flagFromIso, type ContinentCode } from '../data/countries'
+import { countryByNumericId, type ContinentCode } from '../data/countries'
+import { CountryFlag } from './CountryFlag'
 import { oceans, type OceanCode } from '../data/oceans'
 import { seas, type SeaCode } from '../data/seas'
 
@@ -542,7 +543,9 @@ export function WorldMap({
               <path d={`M ${wrongLabelOffsetX - 7} ${wrongPointerY} L 0 0 L ${wrongLabelOffsetX + 7} ${wrongPointerY} Z`} />
               <g transform={`translate(${wrongLabelOffsetX} 0)`}>
                 <rect x={-wrongCardHalfWidth} y={wrongCardY} width={wrongCardWidth} height="42" rx="12" />
-                <text className="wrong-marker-flag" x={-wrongCardHalfWidth + 14} y={wrongTextY}>{flagFromIso(wrongCountry.iso2)}</text>
+                <foreignObject className="wrong-marker-flag" x={-wrongCardHalfWidth + 14} y={wrongTextY - 15} width="34" height="22">
+                  <CountryFlag iso2={wrongCountry.iso2} decorative />
+                </foreignObject>
                 <text
                   className="wrong-marker-name"
                   x={-wrongCardHalfWidth + 61}

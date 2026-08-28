@@ -161,6 +161,7 @@ describe('GeoForMyKids game loop', () => {
     expect(document.querySelector('.map-target-banner')).toHaveTextContent('France')
     expect(screen.getByRole('progressbar', { name: 'Progression du niveau 1' })).toHaveAttribute('aria-valuenow', '0')
     expect(document.querySelector('.map-target-banner')).toContainElement(screen.getByRole('img', { name: 'Drapeau de France' }))
+    expect(screen.getByRole('img', { name: 'Drapeau de France' })).toHaveAttribute('data-country-flag', 'FR')
     expect(screen.queryByText('Elle se trouve dans l’hémisphère Nord.')).not.toBeInTheDocument()
     const portugal = screen.getByRole('button', { name: 'Portugal' })
 
@@ -237,6 +238,8 @@ describe('GeoForMyKids game loop', () => {
     expect(screen.getByRole('button', { name: '0 pays bien connus' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Ma planète/ }))
     expect(document.querySelector<HTMLElement>('[data-country="FR"]')).not.toHaveClass('is-mastered')
+    expect(document.querySelector<HTMLElement>('[data-country="FR"]')).toHaveClass('is-learning')
+    expect(document.querySelector<HTMLElement>('[data-country="FR"]')).toHaveTextContent('Découvert')
   })
 
   it('keeps long country names inside an adaptive map label', () => {
@@ -497,6 +500,28 @@ describe('GeoForMyKids game loop', () => {
     expect(savedProgress.FR.needsReview).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: 'Terminer les révisions' }))
     expect(screen.getByRole('dialog', { name: 'Niveau 2 débloqué !' })).toBeInTheDocument()
+  })
+
+  it('keeps a country in review when its retry still contains one mistake', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
+      countries
+        .filter((country) => country.difficulty === 1 && country.iso2 !== 'FR')
+        .map((country) => [country.iso2, { encounters: 1, stage: 1 }]),
+    )))
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Portugal' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Espagne' }))
+    fireEvent.click(screen.getByRole('button', { name: 'France' }))
+    fireEvent.click(screen.getByRole('button', { name: /Pays suivant/ }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Portugal' }))
+    fireEvent.click(screen.getByRole('button', { name: 'France' }))
+
+    const savedProgress = JSON.parse(localStorage.getItem('globidoo.progress.v1')!)
+    expect(savedProgress.FR).toMatchObject({ encounters: 2, stage: 1, needsReview: true, nextReviewLevel: 2 })
+    expect(screen.getByRole('heading', { name: 'On y reviendra !' })).toBeInTheDocument()
   })
 
   it('carries a still-difficult review into the end of the following level', () => {

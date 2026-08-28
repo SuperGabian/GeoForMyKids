@@ -413,6 +413,22 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
   line-height: 1;
 }
 
+.country-flag {
+  width: 1.333333em;
+  height: 1em;
+  display: inline-block;
+  overflow: hidden;
+  border-radius: .12em;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow: 0 0 0 1px rgba(23, 59, 58, .08);
+}
+
+.map-target-flag .country-flag { width: 46px; height: 34px; }
+.map-wrong-choice .country-flag { width: 31px; height: 23px; }
+.map-answer-banner .country-flag { width: 37px; height: 28px; vertical-align: middle; }
+
 .map-target-globe {
   width: 58px;
   height: 58px;
@@ -884,7 +900,7 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .wrong-country-marker path { fill: #fffdf8; stroke: #d98a2f; stroke-width: 1.5; }
 .wrong-country-marker rect { fill: #fffdf8; stroke: #d98a2f; stroke-width: 1.5; }
 .wrong-country-marker text { dominant-baseline: middle; }
-.wrong-marker-flag { font-size: 25px; }
+.wrong-marker-flag .country-flag { width: 31px; height: 21px; }
 .wrong-marker-name { fill: #173b3a; font-size: 12px; font-weight: 900; }
 
 .game-footer {
@@ -1159,7 +1175,7 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
   box-shadow: 0 10px 30px rgba(31, 77, 73, .07);
 }
 
-.big-flag { font-size: 42px; line-height: 1; }
+.big-flag { width: 56px; height: 42px; flex: 0 0 auto; }
 .country-title div { display: flex; flex-direction: column; }
 .country-title strong { font-size: 22px; letter-spacing: -.5px; }
 .country-title span:last-child { margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 700; }
@@ -1293,6 +1309,7 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .passport-country { position: relative; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 67px; padding: 10px; border: 1px dashed #ccd9d7; border-radius: 14px; color: #91a4a2; background: rgba(255,255,255,.4); }
 .passport-country.is-discovered { color: var(--ink); border-style: solid; border-color: white; background: white; box-shadow: 0 8px 22px rgba(33, 75, 72, .06); }
 .passport-flag { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; background: #eff5f3; font-size: 26px; }
+.passport-flag .country-flag { width: 32px; height: 24px; }
 .passport-country div { min-width: 0; display: flex; flex-direction: column; }
 .passport-country strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .passport-country div span { margin-top: 3px; color: #8ba09e; font-size: 9px; font-weight: 700; }
@@ -1303,6 +1320,9 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .passport-country.is-mastered > div { padding-right: 68px; }
 .passport-country.is-mastered .passport-flag { border-color: #b8e1d4; background: white; box-shadow: 0 5px 13px rgba(23, 125, 98, .1); }
 .mastery-status { position: absolute; top: 7px; right: 7px; padding: 4px 7px; border: 1px solid #87cdb8; border-radius: 99px; color: #0d6c57; background: #dff5ec; font-size: 8px; font-weight: 900; line-height: 1; letter-spacing: .2px; text-transform: uppercase; white-space: nowrap; }
+.passport-country.is-learning { border-color: #b9d4e2; background: linear-gradient(135deg, #fbfdfe, #f0f7fa); }
+.passport-country.is-learning > div { padding-right: 54px; }
+.learning-status { position: absolute; top: 7px; right: 7px; padding: 4px 7px; border: 1px solid #b8d3df; border-radius: 99px; color: #416f82; background: #eaf5f9; font-size: 8px; font-weight: 900; line-height: 1; letter-spacing: .2px; text-transform: uppercase; white-space: nowrap; }
 
 .profile-switcher-overlay {
   position: fixed;
