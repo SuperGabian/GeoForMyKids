@@ -377,7 +377,24 @@ describe('GeoForMyKids game loop', () => {
     frenchRegions.forEach((region, index) => {
       expect(screen.getByText(`Niveau spécial · Régions de France · ${index + 1} sur ${frenchRegions.length}`)).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: region.name })).toBeInTheDocument()
-      fireEvent.click(screen.getByRole('button', { name: region.name }))
+      const regionButton = screen.getByRole('button', { name: region.name })
+      if (index === 0) {
+        const map = document.querySelector<SVGSVGElement>('.france-map')!
+        const capturePointer = vi.fn()
+        map.setPointerCapture = capturePointer
+        map.hasPointerCapture = vi.fn(() => false)
+        const pointer = (type: string) => {
+          const event = new MouseEvent(type, { bubbles: true, button: 0, clientX: 300, clientY: 200 })
+          Object.defineProperty(event, 'pointerId', { value: 1 })
+          return event
+        }
+        fireEvent(regionButton, pointer('pointerdown'))
+        fireEvent(regionButton, pointer('pointerup'))
+        fireEvent.click(regionButton)
+        expect(capturePointer).not.toHaveBeenCalled()
+      } else {
+        fireEvent.click(regionButton)
+      }
       fireEvent.click(screen.getByRole('button', { name: index === frenchRegions.length - 1 ? /Continuer vers le niveau 4/ : /Région suivante/ }))
     })
 

@@ -56,7 +56,6 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
         onPointerDown={(event) => {
           if (event.button !== 0) return
           pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-          event.currentTarget.setPointerCapture?.(event.pointerId)
           const values = [...pointers.current.values()]
           if (values.length === 2) {
             gestureStart.current = {
@@ -80,6 +79,9 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
           const scaleY = bounds.height ? 550 / bounds.height : 1
           const values = [...pointers.current.values()]
           if (values.length >= 2 && gestureStart.current.distance && gestureStart.current.midpoint) {
+            for (const pointerId of pointers.current.keys()) {
+              if (!event.currentTarget.hasPointerCapture?.(pointerId)) event.currentTarget.setPointerCapture?.(pointerId)
+            }
             const distance = Math.hypot(values[1].x - values[0].x, values[1].y - values[0].y)
             const nextZoom = Math.min(6, Math.max(1, gestureStart.current.zoom * distance / gestureStart.current.distance))
             const midpoint: [number, number] = [(values[0].x + values[1].x) / 2, (values[0].y + values[1].y) / 2]
@@ -92,7 +94,10 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
           } else if (gestureStart.current.point) {
             const deltaX = (event.clientX - gestureStart.current.point[0]) * scaleX
             const deltaY = (event.clientY - gestureStart.current.point[1]) * scaleY
-            if (Math.abs(deltaX) + Math.abs(deltaY) > 8) moved.current = true
+            if (Math.abs(deltaX) + Math.abs(deltaY) > 8 && !moved.current) {
+              moved.current = true
+              event.currentTarget.setPointerCapture?.(event.pointerId)
+            }
             setPan(clampPan([gestureStart.current.pan[0] + deltaX, gestureStart.current.pan[1] + deltaY], zoom))
           }
         }}

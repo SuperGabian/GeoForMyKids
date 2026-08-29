@@ -353,7 +353,6 @@ export function WorldMap({
         onPointerDown={(event) => {
           if (event.button !== 0) return
           activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-          event.currentTarget.setPointerCapture?.(event.pointerId)
           if (activePointers.current.size === 2) {
             const [first, second] = [...activePointers.current.values()]
             pinchStart.current = {
@@ -376,6 +375,9 @@ export function WorldMap({
             activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
           }
           if (activePointers.current.size >= 2 && pinchStart.current) {
+            for (const pointerId of activePointers.current.keys()) {
+              if (!event.currentTarget.hasPointerCapture?.(pointerId)) event.currentTarget.setPointerCapture?.(pointerId)
+            }
             const [first, second] = [...activePointers.current.values()]
             const distance = Math.hypot(second.x - first.x, second.y - first.y)
             if (pinchStart.current.distance === 0) return

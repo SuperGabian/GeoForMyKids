@@ -604,7 +604,7 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .france-area:hover, .france-area:focus-visible { fill: #8dcebb; filter: drop-shadow(0 3px 4px rgba(20, 91, 79, .2)); outline: none; }
 .france-area.is-wrong { fill: #f2b09c; animation: country-wrong .45s ease; }
 .france-area.is-correct { fill: #49b889; filter: drop-shadow(0 5px 6px rgba(19, 123, 114, .25)); }
-.france-zoom-controls { top: 14px; right: 14px; }
+.france-zoom-controls { top: 14px; right: 14px; bottom: auto; }
 .france-zoom-controls > span { min-width: 38px; color: var(--teal-dark); font-size: 10px; font-weight: 900; text-align: center; }
 .ocean { fill: transparent; }
 .ocean-zone { cursor: pointer; outline: none; }
