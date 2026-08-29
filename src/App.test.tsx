@@ -16,6 +16,31 @@ describe('GeoForMyKids game loop', () => {
     localStorage.setItem('globidoo.france-rivers.completed.v1', 'true')
   }
 
+  it('keeps only the connected main network for each French river', () => {
+    frenchRivers.forEach((river) => {
+      const lines = river.geometry.geometry.coordinates
+      const endpointKeys = lines.map((line) => [line[0], line.at(-1)!].map((point) => point.join(',')))
+      const remaining = new Set(lines.map((_, index) => index))
+      let networkCount = 0
+
+      while (remaining.size) {
+        networkCount += 1
+        const pending = [remaining.values().next().value!]
+        remaining.delete(pending[0])
+        while (pending.length) {
+          const lineIndex = pending.pop()!
+          for (const candidateIndex of [...remaining]) {
+            if (!endpointKeys[lineIndex].some((key) => endpointKeys[candidateIndex].includes(key))) continue
+            remaining.delete(candidateIndex)
+            pending.push(candidateIndex)
+          }
+        }
+      }
+
+      expect(networkCount, `${river.name} contient des segments isolés`).toBe(1)
+    })
+  })
+
   it('teaches the six continents including Antarctica and five oceans before unlocking countries', () => {
     render(<App />)
 

@@ -33,6 +33,48 @@ function simplify(points, tolerance = .004) {
   return [...simplify(points.slice(0, furthestIndex + 1), tolerance).slice(0, -1), ...simplify(points.slice(furthestIndex), tolerance)]
 }
 
+function keepLargestConnectedNetwork(lines) {
+  const pointKey = ([longitude, latitude]) => `${longitude.toFixed(7)},${latitude.toFixed(7)}`
+  const endpoints = lines.map((line) => [pointKey(line[0]), pointKey(line.at(-1))])
+  const linesByEndpoint = new Map()
+
+  endpoints.forEach((keys, lineIndex) => {
+    keys.forEach((key) => {
+      const indexes = linesByEndpoint.get(key) ?? []
+      indexes.push(lineIndex)
+      linesByEndpoint.set(key, indexes)
+    })
+  })
+
+  const visited = new Set()
+  const networks = []
+  lines.forEach((_, firstIndex) => {
+    if (visited.has(firstIndex)) return
+    const pending = [firstIndex]
+    const network = []
+    visited.add(firstIndex)
+
+    while (pending.length) {
+      const lineIndex = pending.pop()
+      network.push(lineIndex)
+      endpoints[lineIndex].forEach((key) => {
+        for (const neighbourIndex of linesByEndpoint.get(key) ?? []) {
+          if (visited.has(neighbourIndex)) continue
+          visited.add(neighbourIndex)
+          pending.push(neighbourIndex)
+        }
+      })
+    }
+    networks.push(network)
+  })
+
+  const mainNetwork = networks.sort((first, second) => (
+    second.reduce((total, lineIndex) => total + lines[lineIndex].length, 0)
+    - first.reduce((total, lineIndex) => total + lines[lineIndex].length, 0)
+  ))[0] ?? []
+  return mainNetwork.map((lineIndex) => lines[lineIndex])
+}
+
 async function downloadRiver(river) {
   const filter = `<fes:Filter xmlns:fes="http://www.opengis.net/fes/2.0"><fes:PropertyIsLike wildCard="*" singleChar="?" escapeChar="!"><fes:ValueReference>TopoOH</fes:ValueReference><fes:Literal>*${river.name}*</fes:Literal></fes:PropertyIsLike></fes:Filter>`
   const parameters = new URLSearchParams({
@@ -47,7 +89,7 @@ async function downloadRiver(river) {
   const response = await fetch(`${WFS_URL}?${parameters}`)
   if (!response.ok) throw new Error(`Impossible de télécharger ${river.name} (${response.status})`)
   const source = await response.json()
-  const lines = source.features
+  const lines = keepLargestConnectedNetwork(source.features
     .filter((feature) => feature.properties.TopoOH?.toLocaleLowerCase('fr') === river.sourceName.toLocaleLowerCase('fr'))
     .flatMap((feature) => feature.geometry.type === 'MultiLineString' ? feature.geometry.coordinates : [feature.geometry.coordinates])
     .filter((line) => line.length >= 2)
@@ -56,7 +98,7 @@ async function downloadRiver(river) {
       return center[0] >= river.bounds[0] && center[0] <= river.bounds[2]
         && center[1] >= river.bounds[1] && center[1] <= river.bounds[3]
     })
-    .map((line) => simplify(line))
+    .map((line) => simplify(line)))
   if (!lines.length) throw new Error(`Aucun tracé trouvé pour ${river.name}`)
   return {
     type: 'Feature',
