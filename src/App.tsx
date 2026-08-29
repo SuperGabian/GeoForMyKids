@@ -4,6 +4,7 @@ import { WorldMap } from './components/WorldMap'
 import { SuccessCard } from './components/SuccessCard'
 import { CountryFlag } from './components/CountryFlag'
 import { FranceMap } from './components/FranceMap'
+import { FranceRiversMap } from './components/FranceRiversMap'
 import { ProgressView, type CountryProgress, type FoundationProgress, type ProgressItem } from './components/ProgressView'
 import {
   continentLabels,
@@ -16,6 +17,7 @@ import {
 } from './data/countries'
 import { oceans, type OceanCode } from './data/oceans'
 import { seas, type SeaCode } from './data/seas'
+import { frenchRivers, type FrenchRiver } from './data/rivers'
 import {
   DEFAULT_FRENCH_REGION_CODE,
   departmentsForRegion,
@@ -37,6 +39,7 @@ const STORAGE_KEY = 'globidoo.progress.v1'
 const TUTORIAL_KEY = 'globidoo.tutorial.completed.v2'
 const OCEAN_TUTORIAL_KEY = 'globidoo.ocean-tutorial.completed.v1'
 const SEA_TUTORIAL_KEY = 'globidoo.sea-tutorial.completed.v1'
+const RIVER_TUTORIAL_KEY = 'globidoo.france-rivers.completed.v1'
 const FOUNDATION_PROGRESS_KEY = 'globidoo.foundations.progress.v1'
 const PREFERRED_REGION_KEY = 'globidoo.france.preferred-region.v1'
 const REGION_TUTORIAL_KEY = 'globidoo.france-regions.completed.v1'
@@ -106,7 +109,7 @@ const continentTargets: ContinentTarget[] = [
   },
 ]
 
-type GameMode = 'continents' | 'oceans' | 'seas' | 'country' | 'regions' | 'departments'
+type GameMode = 'continents' | 'oceans' | 'seas' | 'rivers' | 'country' | 'regions' | 'departments'
 type WrongAnswer = { iso2: string; name: string; continent: ContinentCode | 'AN' }
 type LevelTransition = { from: Country['difficulty']; to: Country['difficulty']; total: number }
 type ReviewSession = {
@@ -120,7 +123,8 @@ type ReplaySession = {
   returnCountryIso: string
   queue: string[]
   index: number
-  returnMode?: 'regions' | 'departments'
+  returnMode?: 'rivers' | 'regions' | 'departments'
+  returnRiverStep?: number
   returnRegionStep?: number
   returnDepartmentStep?: number
 }
@@ -203,6 +207,19 @@ function seaTutorialIsPending(progress: CountryProgress, profileId: string) {
   return firstTwoLevelsCompleted && countriesDueForReview(progress, 2).length === 0
 }
 
+function riverTutorialIsPending(progress: CountryProgress, profileId: string) {
+  try {
+    if (localStorage.getItem(profileStorageKey(RIVER_TUTORIAL_KEY, profileId)) === 'true') return false
+    if (localStorage.getItem(profileStorageKey(SEA_TUTORIAL_KEY, profileId)) !== 'true') return false
+  } catch {
+    return false
+  }
+  const firstTwoLevelsCompleted = countries
+    .filter((country) => country.difficulty <= 2)
+    .every((country) => progress[country.iso2]?.encounters)
+  return firstTwoLevelsCompleted && countriesDueForReview(progress, 2).length === 0
+}
+
 function pendingFoundationReview(foundationProgress: FoundationProgress, profileId: string, isAdmin = false): FoundationReview | undefined {
   if (isAdmin) return undefined
   try {
@@ -232,6 +249,7 @@ function initialMode(progress: CountryProgress, foundationProgress: FoundationPr
     const foundationReview = pendingFoundationReview(foundationProgress, profileId)
     if (foundationReview) return foundationReview.mode
     if (seaTutorialIsPending(progress, profileId)) return 'seas'
+    if (riverTutorialIsPending(progress, profileId)) return 'rivers'
     const unseen = countries.filter((country) => !progress[country.iso2]?.encounters)
     const completedLevel = unseen.length ? Math.max(0, Math.min(...unseen.map((country) => country.difficulty)) - 1) : countryDifficultyLevels.at(-1)!
     if (completedLevel > 0 && countriesDueForReview(progress, completedLevel as Country['difficulty']).length) return 'country'
@@ -408,6 +426,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   const [tutorialStep, setTutorialStep] = useState(0)
   const [oceanStep, setOceanStep] = useState(0)
   const [seaStep, setSeaStep] = useState(0)
+  const [riverStep, setRiverStep] = useState(0)
   const [regionStep, setRegionStep] = useState(0)
   const [departmentStep, setDepartmentStep] = useState(0)
   const [foundationReview, setFoundationReview] = useState<FoundationReview | undefined>(() => pendingFoundationReview(foundationProgress, activeProfile.id, isAdmin))
@@ -430,6 +449,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   const continentTarget = continentTargets[continentTargetIndex]
   const oceanTarget = oceans[oceanTargetIndex]
   const seaTarget = seas[seaStep]
+  const riverTarget = frenchRivers[riverStep]
   const preferredRegion = frenchRegionByCode[preferredRegionCode] ?? frenchRegionByCode[DEFAULT_FRENCH_REGION_CODE]
   const departmentTargets = departmentsForRegion(preferredRegion.code)
   const regionTarget = frenchRegions[regionStep]
@@ -439,9 +459,10 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   const continentTutorialFinished = gameMode === 'continents' && !foundationReview && tutorialStep === continentTargets.length - 1
   const oceanTutorialFinished = gameMode === 'oceans' && !foundationReview && oceanStep === oceans.length - 1
   const seaTutorialFinished = gameMode === 'seas' && seaStep === seas.length - 1
+  const riverTutorialFinished = gameMode === 'rivers' && riverStep === frenchRivers.length - 1
   const regionTutorialFinished = gameMode === 'regions' && regionStep === frenchRegions.length - 1
   const departmentTutorialFinished = gameMode === 'departments' && departmentStep === departmentTargets.length - 1
-  const tutorialPhaseFinished = continentTutorialFinished || oceanTutorialFinished || seaTutorialFinished || regionTutorialFinished || departmentTutorialFinished
+  const tutorialPhaseFinished = continentTutorialFinished || oceanTutorialFinished || seaTutorialFinished || riverTutorialFinished || regionTutorialFinished || departmentTutorialFinished
   const oceansAlreadyKnown = gameMode === 'continents'
     && localStorage.getItem(profileStorageKey(OCEAN_TUTORIAL_KEY, activeProfile.id)) === 'true'
 
@@ -497,6 +518,16 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     setReviewSession(undefined)
     setSeaStep(0)
     setGameMode('seas')
+    resetRoundState()
+  }
+
+  const beginRiverTutorial = (nextCountry: Country, replay = false) => {
+    setCountryTarget(nextCountry)
+    setReviewSession(undefined)
+    setSpecialIsReplay(replay)
+    setRiverStep(0)
+    setGameMode('rivers')
+    setShowLevelPicker(false)
     resetRoundState()
   }
 
@@ -560,7 +591,8 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       returnCountryIso: replaySession?.returnCountryIso ?? countryTarget.iso2,
       queue,
       index: 0,
-      returnMode: replaySession?.returnMode ?? (gameMode === 'regions' || gameMode === 'departments' ? gameMode : undefined),
+      returnMode: replaySession?.returnMode ?? (gameMode === 'rivers' || gameMode === 'regions' || gameMode === 'departments' ? gameMode : undefined),
+      returnRiverStep: replaySession?.returnRiverStep ?? (gameMode === 'rivers' ? riverStep : undefined),
       returnRegionStep: replaySession?.returnRegionStep ?? (gameMode === 'regions' ? regionStep : undefined),
       returnDepartmentStep: replaySession?.returnDepartmentStep ?? (gameMode === 'departments' ? departmentStep : undefined),
     })
@@ -575,6 +607,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     setCountryTarget(countryByIso[replaySession.returnCountryIso])
     if (replaySession.returnMode) {
       setGameMode(replaySession.returnMode)
+      if (replaySession.returnMode === 'rivers') setRiverStep(replaySession.returnRiverStep ?? 0)
       if (replaySession.returnMode === 'regions') setRegionStep(replaySession.returnRegionStep ?? 0)
       if (replaySession.returnMode === 'departments') setDepartmentStep(replaySession.returnDepartmentStep ?? 0)
     }
@@ -680,6 +713,17 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     setIsCorrect(true)
   }
 
+  const submitRiverAnswer = (river: FrenchRiver) => {
+    if (isCorrect || gameMode !== 'rivers') return
+    setLastSelected(river.code)
+    if (river.code !== riverTarget.code) {
+      setWrongAnswers((answers) => [...answers, { iso2: river.code, name: river.articleName, continent: 'EU' }])
+      return
+    }
+    setAppreciation(wrongAnswers.length ? 'Bien joué !' : 'Excellent !')
+    setIsCorrect(true)
+  }
+
   const submitFrenchArea = (area: FrenchArea) => {
     if (isCorrect || (gameMode !== 'regions' && gameMode !== 'departments')) return
     const target = gameMode === 'regions' ? regionTarget : departmentTarget
@@ -705,6 +749,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       setCountryTarget(countryByIso[replaySession.returnCountryIso])
       if (replaySession.returnMode) {
         setGameMode(replaySession.returnMode)
+        if (replaySession.returnMode === 'rivers') setRiverStep(replaySession.returnRiverStep ?? 0)
         if (replaySession.returnMode === 'regions') setRegionStep(replaySession.returnRegionStep ?? 0)
         if (replaySession.returnMode === 'departments') setDepartmentStep(replaySession.returnDepartmentStep ?? 0)
       }
@@ -732,6 +777,10 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       if (beginPendingFranceTutorial(completedLevel, next)) return
       if (completedLevel === 2 && next.difficulty > 2 && seaTutorialIsPending(progress, activeProfile.id)) {
         beginSeaTutorial(next)
+        return
+      }
+      if (completedLevel === 2 && next.difficulty > 2 && riverTutorialIsPending(progress, activeProfile.id)) {
+        beginRiverTutorial(next)
         return
       }
       if (next.difficulty > completedLevel) {
@@ -771,6 +820,10 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       beginSeaTutorial(next)
       return
     }
+    if (countryTarget.difficulty === 2 && next.difficulty > 2 && riverTutorialIsPending(progress, activeProfile.id)) {
+      beginRiverTutorial(next)
+      return
+    }
     if (next.difficulty !== countryTarget.difficulty) {
       setLevelTransition({
         from: countryTarget.difficulty,
@@ -805,6 +858,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       if (seaTutorialIsPending(progress, activeProfile.id)) {
         setGameMode('seas')
         setSeaStep(0)
+      } else if (riverTutorialIsPending(progress, activeProfile.id)) {
+        beginRiverTutorial(countryTarget)
+        return
       } else if (beginFranceCatchUp(countryTarget)) {
         return
       } else {
@@ -830,6 +886,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     if (seaTutorialIsPending(progress, activeProfile.id)) {
       setGameMode('seas')
       setSeaStep(0)
+    } else if (riverTutorialIsPending(progress, activeProfile.id)) {
+      beginRiverTutorial(countryTarget)
+      return
     } else if (beginFranceCatchUp(countryTarget)) {
       return
     } else {
@@ -846,6 +905,35 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   }
 
   const nextTutorialRound = () => {
+    if (gameMode === 'rivers') {
+      if (!riverTutorialFinished) {
+        setRiverStep((step) => step + 1)
+        resetRoundState()
+        return
+      }
+      localStorage.setItem(profileStorageKey(RIVER_TUTORIAL_KEY, activeProfile.id), 'true')
+      setGameMode('country')
+      if (!specialIsReplay && beginFranceCatchUp(countryTarget)) return
+      if (!specialIsReplay && countries.every((country) => progress[country.iso2]?.encounters)) {
+        setWrongAnswers([])
+        setLastSelected(undefined)
+        setAllCountriesCompleted(true)
+        setIsCorrect(true)
+        setSpecialIsReplay(false)
+        return
+      }
+      if (!specialIsReplay && countryTarget.difficulty === 3) {
+        setLevelTransition({
+          from: 2,
+          to: 3,
+          total: countries.filter((country) => country.difficulty === 3).length,
+        })
+      }
+      setSpecialIsReplay(false)
+      resetRoundState()
+      return
+    }
+
     if (gameMode === 'regions' || gameMode === 'departments') {
       const finished = gameMode === 'regions' ? regionTutorialFinished : departmentTutorialFinished
       if (!finished) {
@@ -904,6 +992,10 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
 
     if (gameMode === 'seas' && seaTutorialFinished) {
       localStorage.setItem(profileStorageKey(SEA_TUTORIAL_KEY, activeProfile.id), 'true')
+      if (riverTutorialIsPending(progress, activeProfile.id)) {
+        beginRiverTutorial(countryTarget)
+        return
+      }
       setGameMode('country')
       if (beginFranceCatchUp(countryTarget)) return
       if (countries.every((country) => progress[country.iso2]?.encounters)) {
@@ -966,18 +1058,23 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       ? `Où se trouve ${oceanTarget.articleName} ?`
       : gameMode === 'seas'
         ? `Où se trouve ${seaTarget.articleName} ?`
+        : gameMode === 'rivers'
+          ? `Où se trouve ${riverTarget.articleName} ?`
         : gameMode === 'regions'
           ? `Où se trouve la région ${regionTarget.name} ?`
           : gameMode === 'departments'
             ? `Où se trouve le département ${departmentTarget.name} ?`
             : fr.prompt
   const franceMode = gameMode === 'regions' || gameMode === 'departments'
+  const riverMode = gameMode === 'rivers'
   const learningTargetName = gameMode === 'continents'
     ? continentTarget.continentName
     : gameMode === 'oceans'
       ? `Océan ${oceanTarget.name}`
       : gameMode === 'seas'
         ? `Mer ${seaTarget.name}`
+        : gameMode === 'rivers'
+          ? riverTarget.name
         : gameMode === 'regions'
           ? regionTarget.name
           : gameMode === 'departments'
@@ -985,10 +1082,10 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
             : countryTarget.name
   const learningStep = foundationReview
     ? foundationReview.index
-    : gameMode === 'continents' ? tutorialStep : gameMode === 'oceans' ? oceanStep : gameMode === 'seas' ? seaStep : gameMode === 'regions' ? regionStep : departmentStep
+    : gameMode === 'continents' ? tutorialStep : gameMode === 'oceans' ? oceanStep : gameMode === 'seas' ? seaStep : gameMode === 'rivers' ? riverStep : gameMode === 'regions' ? regionStep : departmentStep
   const learningTotal = foundationReview
     ? foundationReview.queue.length
-    : gameMode === 'continents' ? continentTargets.length : gameMode === 'oceans' ? oceans.length : gameMode === 'seas' ? seas.length : gameMode === 'regions' ? frenchRegions.length : departmentTargets.length
+    : gameMode === 'continents' ? continentTargets.length : gameMode === 'oceans' ? oceans.length : gameMode === 'seas' ? seas.length : gameMode === 'rivers' ? frenchRivers.length : gameMode === 'regions' ? frenchRegions.length : departmentTargets.length
   const continentsNeedReview = continentTargets.some((item) => foundationProgress[`continent:${item.continent}`]?.needsReview)
   const oceansNeedReview = oceans.some((item) => foundationProgress[`ocean:${item.code}`]?.needsReview)
   const nextLearningLabel = foundationReview
@@ -998,7 +1095,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       : gameMode === 'oceans'
         ? oceanTutorialFinished ? oceansNeedReview ? 'Réviser les océans' : 'Chercher les pays' : 'Océan suivant'
         : gameMode === 'seas'
-          ? seaTutorialFinished ? 'Continuer vers le niveau 3' : 'Mer suivante'
+          ? seaTutorialFinished ? 'Découvrir les fleuves' : 'Mer suivante'
+          : gameMode === 'rivers'
+            ? riverTutorialFinished ? 'Continuer vers le niveau 3' : 'Fleuve suivant'
           : gameMode === 'regions'
             ? regionTutorialFinished ? 'Continuer vers le niveau 4' : 'Région suivante'
             : departmentTutorialFinished ? 'Continuer vers le niveau 5' : 'Département suivant'
@@ -1056,9 +1155,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
           ) : gameMode !== 'country' ? (
             <section className="tutorial-success" aria-live="polite">
               <span className="tutorial-success-icon" aria-hidden="true">✦</span>
-              <span className="eyebrow">{foundationReview ? 'Révision réussie' : gameMode === 'continents' ? 'Continent découvert' : gameMode === 'oceans' ? 'Océan découvert' : gameMode === 'seas' ? 'Mer découverte' : gameMode === 'regions' ? 'Région découverte' : 'Département découvert'}</span>
+              <span className="eyebrow">{foundationReview ? 'Révision réussie' : gameMode === 'continents' ? 'Continent découvert' : gameMode === 'oceans' ? 'Océan découvert' : gameMode === 'seas' ? 'Mer découverte' : gameMode === 'rivers' ? 'Fleuve découvert' : gameMode === 'regions' ? 'Région découverte' : 'Département découvert'}</span>
               <h2>{learningTargetName} !</h2>
-              <p>Tu sais maintenant où se trouve <strong>{learningTargetName}</strong> sur la carte.</p>
+              <p>Tu sais maintenant où se trouve <strong>{gameMode === 'rivers' ? riverTarget.articleName : learningTargetName}</strong> sur la carte.</p>
               {gameMode === 'continents' ? (
                 <div className="continent-discovery-details">
                   <div className="continent-population">
@@ -1078,12 +1177,12 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                   </div>
                 </div>
               ) : null}
-              {gameMode === 'oceans' || gameMode === 'seas' ? (
+              {gameMode === 'oceans' || gameMode === 'seas' || gameMode === 'rivers' ? (
                 <div className="tutorial-fact is-standalone">
                   <Lightbulb size={18} aria-hidden="true" />
                   <div>
                     <strong>Le savais-tu ?</strong>
-                    <p>{gameMode === 'oceans' ? oceanTarget.fact : seaTarget.fact}</p>
+                    <p>{gameMode === 'oceans' ? oceanTarget.fact : gameMode === 'seas' ? seaTarget.fact : riverTarget.fact}</p>
                   </div>
                 </div>
               ) : null}
@@ -1102,7 +1201,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                     : gameMode === 'oceans'
                       ? 'Bravo ! Tu connais maintenant les cinq grands océans. Partons à la recherche des pays !'
                       : gameMode === 'seas'
-                        ? 'Bravo ! Tu sais maintenant repérer huit mers essentielles. Le niveau 3 peut commencer !'
+                        ? 'Bravo ! Tu sais maintenant repérer huit mers essentielles. Découvrons maintenant les grands fleuves français.'
+                        : gameMode === 'rivers'
+                          ? 'Bravo ! Tu sais maintenant situer cinq grands fleuves français. Le niveau 3 peut commencer !'
                         : gameMode === 'regions'
                           ? 'Bravo ! Tu sais maintenant situer les treize régions de France métropolitaine.'
                           : `Bravo ! Tu connais les départements de la région ${preferredRegion.name}.`}
@@ -1154,6 +1255,8 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                     ? `Niveau 0 · Océan ${oceanStep + 1} sur ${oceans.length}`
                   : gameMode === 'seas'
                     ? `Niveau spécial · Mer ${seaStep + 1} sur ${seas.length}`
+                    : gameMode === 'rivers'
+                      ? `Niveau spécial · Fleuve ${riverStep + 1} sur ${frenchRivers.length}`
                     : gameMode === 'regions'
                       ? `Niveau spécial · Régions de France · ${regionStep + 1} sur ${frenchRegions.length}`
                       : gameMode === 'departments'
@@ -1187,7 +1290,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
           ) : (
             <div className="map-answer-banner">
               <span>{gameMode !== 'country' ? <Globe2 size={25} /> : <CountryFlag iso2={countryTarget.iso2} name={countryTarget.name} />}</span>
-              <strong>{gameMode === 'country' ? `${countryTarget.name} trouvé !` : `${learningTargetName} trouvé${gameMode === 'oceans' || gameMode === 'departments' ? '' : 'e'} !`}</strong>
+              <strong>{gameMode === 'country' ? `${countryTarget.name} trouvé !` : gameMode === 'rivers' ? `Bravo, c’est bien ${riverTarget.articleName} !` : `${learningTargetName} trouvé${gameMode === 'oceans' || gameMode === 'departments' ? '' : 'e'} !`}</strong>
             </div>
           )}
 
@@ -1199,6 +1302,16 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
               isCorrect={isCorrect}
               disabled={isCorrect || Boolean(levelTransition)}
               onSelect={submitFrenchArea}
+              onLevelPickerClick={isAdmin || replayableLevels.length > 0 ? () => setShowLevelPicker(true) : undefined}
+            />
+          ) : riverMode ? (
+            <FranceRiversMap
+              rivers={frenchRivers}
+              targetCode={riverTarget.code}
+              selectedCode={lastSelected}
+              isCorrect={isCorrect}
+              disabled={isCorrect || Boolean(levelTransition)}
+              onSelect={submitRiverAnswer}
               onLevelPickerClick={isAdmin || replayableLevels.length > 0 ? () => setShowLevelPicker(true) : undefined}
             />
           ) : <WorldMap
@@ -1245,7 +1358,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
             <div className="level-finale-visual" aria-hidden="true">
               <div className="finale-rays" />
               <div className="finale-orbit"><span>{gameMode === 'continents' ? '🌍' : gameMode === 'regions' || gameMode === 'departments' ? '🇫🇷' : '🌊'}</span><i>✦</i><b>✦</b></div>
-              <strong>{gameMode === 'continents' ? 'Les 6 continents découverts !' : gameMode === 'oceans' ? 'Les 5 océans découverts !' : gameMode === 'seas' ? 'Les 8 mers découvertes !' : gameMode === 'regions' ? 'Les 13 régions découvertes !' : `Les départements de ${preferredRegion.name} découverts !`}</strong>
+              <strong>{gameMode === 'continents' ? 'Les 6 continents découverts !' : gameMode === 'oceans' ? 'Les 5 océans découverts !' : gameMode === 'seas' ? 'Les 8 mers découvertes !' : gameMode === 'rivers' ? 'Les 5 fleuves découverts !' : gameMode === 'regions' ? 'Les 13 régions découvertes !' : `Les départements de ${preferredRegion.name} découverts !`}</strong>
             </div>
           ) : null}
 
@@ -1266,6 +1379,8 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
             ? 'Repère les cinq grands océans avant de partir à la recherche des pays.'
             : gameMode === 'seas'
               ? 'Repère les grandes mers qui t’aideront à situer les prochains pays.'
+              : gameMode === 'rivers'
+                ? 'Suis le cours des grands fleuves français, de leur source jusqu’à la mer.'
               : gameMode === 'regions'
                 ? 'Observe la forme et la position des régions françaises.'
                 : gameMode === 'departments'
@@ -1286,6 +1401,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
             <div className="level-picker-grid">
               {isAdmin ? (
                 <>
+                  <button type="button" aria-label="Tester les fleuves français" onClick={() => beginRiverTutorial(countryTarget, true)}>
+                    <span>Niveau spécial</span><strong>Fleuves français</strong><small>{frenchRivers.length} fleuves</small>
+                  </button>
                   <button type="button" aria-label="Tester les régions françaises" onClick={() => beginFranceTutorial('regions', countryTarget, true)}>
                     <span>Niveau spécial</span><strong>Régions françaises</strong><small>{frenchRegions.length} régions</small>
                   </button>
@@ -1298,7 +1416,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                 <button className="is-current-journey" type="button" aria-label={replaySession.returnMode ? 'Revenir au niveau spécial' : `Revenir au niveau ${replaySession.returnLevel}`} onClick={returnToCurrentJourney}>
                   <span>Parcours en cours</span>
                   <strong>{replaySession.returnMode
-                    ? replaySession.returnMode === 'regions' ? 'Régions françaises' : `Départements · ${preferredRegion.name}`
+                    ? replaySession.returnMode === 'rivers' ? 'Fleuves français' : replaySession.returnMode === 'regions' ? 'Régions françaises' : `Départements · ${preferredRegion.name}`
                     : `Niveau ${replaySession.returnLevel} · ${countryLevelNames[replaySession.returnLevel]}`}</strong>
                   <small>Reprendre là où tu t’étais arrêté</small>
                 </button>

@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "data:countries": "node scripts/generate-country-catalog.mjs",
     "data:france": "node scripts/update-france-geography.mjs",
+    "data:rivers": "node scripts/update-france-rivers.mjs",
     "data:populations": "node scripts/update-populations.mjs",
     "preview": "vite preview",
     "test": "vitest run"

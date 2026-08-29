@@ -608,6 +608,13 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .france-map-shell .france-zoom-controls { top: 14px; right: 14px; bottom: auto; left: auto; width: auto; height: auto; min-height: 0; padding: 3px; }
 .france-level-picker { position: absolute; z-index: 6; top: 14px; left: 14px; min-height: 34px; padding: 0 13px; border: 1px solid rgba(22, 101, 94, .18); border-radius: 10px; color: var(--teal-dark); background: rgba(255,255,255,.94); box-shadow: 0 7px 18px rgba(31, 74, 71, .1); cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .5px; }
 .france-level-picker:hover { color: white; background: var(--teal); }
+.river-france-background path { fill: #eef7f4; stroke: white; stroke-width: 1.7; vector-effect: non-scaling-stroke; }
+.river-choice { cursor: pointer; }
+.river-line { fill: none; stroke: #54a9cf; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; transition: stroke .16s ease, stroke-width .16s ease, filter .16s ease; }
+.river-hit-area { fill: none; stroke: transparent; stroke-width: 20; vector-effect: non-scaling-stroke; cursor: pointer; outline: none !important; }
+.river-choice:hover .river-line, .river-choice:focus-within .river-line { stroke: #167fae; stroke-width: 6; filter: drop-shadow(0 2px 3px rgba(17, 93, 126, .25)); }
+.river-choice.is-wrong .river-line { stroke: #e57963; stroke-width: 7; animation: country-wrong .45s ease; }
+.river-choice.is-correct .river-line { stroke: #25a67c; stroke-width: 8; filter: drop-shadow(0 3px 4px rgba(19, 123, 94, .3)); }
 .ocean { fill: transparent; }
 .ocean-zone { cursor: pointer; outline: none; }
 .ocean-zone ellipse { fill: rgba(70, 157, 190, .055); stroke: rgba(54, 137, 169, .12); stroke-width: 1; transition: fill .18s ease, stroke .18s ease, filter .18s ease; }

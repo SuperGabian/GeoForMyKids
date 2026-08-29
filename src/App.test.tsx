@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { countries, countriesByDifficulty, countryDifficultyLevels } from './data/countries'
 import { departmentsForRegion, frenchRegions } from './data/france'
+import { frenchRivers } from './data/rivers'
 
 describe('GeoForMyKids game loop', () => {
   beforeEach(() => localStorage.clear())
@@ -12,6 +13,7 @@ describe('GeoForMyKids game loop', () => {
     localStorage.setItem('globidoo.tutorial.completed.v2', 'true')
     localStorage.setItem('globidoo.ocean-tutorial.completed.v1', 'true')
     localStorage.setItem('globidoo.sea-tutorial.completed.v1', 'true')
+    localStorage.setItem('globidoo.france-rivers.completed.v1', 'true')
   }
 
   it('teaches the six continents including Antarctica and five oceans before unlocking countries', () => {
@@ -112,7 +114,7 @@ describe('GeoForMyKids game loop', () => {
     expect(screen.getByRole('heading', { name: 'Europe' })).toBeInTheDocument()
   })
 
-  it('teaches the major seas between country levels 2 and 3', () => {
+  it('teaches the major seas and French rivers between country levels 2 and 3', () => {
     localStorage.setItem('globidoo.tutorial.completed.v2', 'true')
     localStorage.setItem('globidoo.ocean-tutorial.completed.v1', 'true')
     localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
@@ -158,10 +160,29 @@ describe('GeoForMyKids game loop', () => {
         expect(document.querySelector('.level-finale-visual')).toHaveTextContent('Les 8 mers découvertes !')
         expect(document.querySelectorAll('.success-celebration .particle')).toHaveLength(28)
       }
-      fireEvent.click(screen.getByRole('button', { name: index === seaJourney.length - 1 ? /Continuer vers le niveau 3/ : /Mer suivante/ }))
+      fireEvent.click(screen.getByRole('button', { name: index === seaJourney.length - 1 ? /Découvrir les fleuves/ : /Mer suivante/ }))
     })
 
     expect(localStorage.getItem('globidoo.sea-tutorial.completed.v1')).toBe('true')
+    expect(screen.getByText(`Niveau spécial · Fleuve 1 sur ${frenchRivers.length}`)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Seine' })).toBeInTheDocument()
+    expect(screen.getByText('Où se trouve la Seine ?')).toBeInTheDocument()
+    expect(document.querySelectorAll('.river-hit-area')).toHaveLength(frenchRivers.length)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Loire' }))
+    expect(screen.getByText(/Tu as choisi/)).toHaveTextContent('la Loire')
+
+    frenchRivers.forEach((river, index) => {
+      fireEvent.click(screen.getByRole('button', { name: river.name }))
+      expect(screen.getByRole('heading', { name: `${river.name} !` })).toBeInTheDocument()
+      expect(document.querySelector('.tutorial-fact')).toHaveTextContent(river.fact)
+      if (index === frenchRivers.length - 1) {
+        expect(document.querySelector('.level-finale-visual')).toHaveTextContent('Les 5 fleuves découverts !')
+      }
+      fireEvent.click(screen.getByRole('button', { name: index === frenchRivers.length - 1 ? /Continuer vers le niveau 3/ : /Fleuve suivant/ }))
+    })
+
+    expect(localStorage.getItem('globidoo.france-rivers.completed.v1')).toBe('true')
     expect(screen.getByRole('dialog', { name: 'Niveau 3 débloqué !' })).toBeInTheDocument()
     expect(screen.getByRole('progressbar', { name: 'Progression du niveau 3' })).toHaveAttribute('aria-valuenow', '0')
   })
@@ -358,6 +379,7 @@ describe('GeoForMyKids game loop', () => {
     countryDifficultyLevels.forEach((difficulty) => {
       expect(screen.getByRole('button', { name: `Refaire le niveau ${difficulty}` })).toBeInTheDocument()
     })
+    expect(screen.getByRole('button', { name: 'Tester les fleuves français' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Tester les régions françaises' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Tester les départements de Provence-Alpes-Côte d.Azur/ })).toBeInTheDocument()
 
