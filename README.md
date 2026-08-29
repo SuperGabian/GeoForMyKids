@@ -1,12 +1,12 @@
 # GeoForMyKids
 
-GeoForMyKids est un jeu éducatif de géographie pensé pour les enfants. La carte constitue le cœur du jeu : l’enfant apprend progressivement à reconnaître les continents, les océans, les mers puis les pays.
+GeoForMyKids est un jeu éducatif de géographie pensé pour les enfants. La carte constitue le cœur du jeu : l’enfant apprend progressivement à reconnaître les continents, les océans, les mers, les pays et la géographie française.
 
 L’application est une PWA React entièrement statique. Elle peut être installée sur un ordinateur, une tablette ou un téléphone et continuer à fonctionner hors connexion après une première ouverture réussie.
 
 ## Fonctionnalités
 
-- Tutoriels consacrés aux continents, aux océans et aux mers.
+- Parcours progressif : continents, océans, pays, mers, fleuves, régions et départements français.
 - Pays répartis dans des niveaux de difficulté fixes.
 - Indices accompagnés d’un zoom sur la zone concernée.
 - Carte déplaçable et zoomable à la souris, au tactile et au clavier.

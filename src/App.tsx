@@ -201,10 +201,10 @@ function seaTutorialIsPending(progress: CountryProgress, profileId: string) {
     return false
   }
 
-  const firstTwoLevelsCompleted = countries
-    .filter((country) => country.difficulty <= 2)
+  const firstLevelCompleted = countries
+    .filter((country) => country.difficulty <= 1)
     .every((country) => progress[country.iso2]?.encounters)
-  return firstTwoLevelsCompleted && countriesDueForReview(progress, 2).length === 0
+  return firstLevelCompleted && countriesDueForReview(progress, 1).length === 0
 }
 
 function riverTutorialIsPending(progress: CountryProgress, profileId: string) {
@@ -558,7 +558,16 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     return false
   }
 
-  const beginFranceCatchUp = (nextCountry: Country) => {
+  const beginSpecialCatchUp = (nextCountry: Country) => {
+    if (seaTutorialIsPending(progress, activeProfile.id)) {
+      beginSeaTutorial(nextCountry)
+      return true
+    }
+    if (riverTutorialIsPending(progress, activeProfile.id)) {
+      beginRiverTutorial(nextCountry)
+      return true
+    }
+
     const firstThreeLevelsCompleted = countries
       .filter((country) => country.difficulty <= 3)
       .every((country) => progress[country.iso2]?.encounters)
@@ -774,8 +783,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
         setAllCountriesCompleted(true)
         return
       }
-      if (beginPendingFranceTutorial(completedLevel, next)) return
-      if (completedLevel === 2 && next.difficulty > 2 && seaTutorialIsPending(progress, activeProfile.id)) {
+      if (completedLevel === 1 && next.difficulty > 1 && seaTutorialIsPending(progress, activeProfile.id)) {
         beginSeaTutorial(next)
         return
       }
@@ -783,6 +791,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
         beginRiverTutorial(next)
         return
       }
+      if (beginPendingFranceTutorial(completedLevel, next)) return
       if (next.difficulty > completedLevel) {
         setLevelTransition({
           from: completedLevel,
@@ -815,8 +824,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       setAllCountriesCompleted(true)
       return
     }
-    if (beginPendingFranceTutorial(countryTarget.difficulty, next)) return
-    if (countryTarget.difficulty === 2 && next.difficulty > 2 && seaTutorialIsPending(progress, activeProfile.id)) {
+    if (countryTarget.difficulty === 1 && next.difficulty > 1 && seaTutorialIsPending(progress, activeProfile.id)) {
       beginSeaTutorial(next)
       return
     }
@@ -824,6 +832,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       beginRiverTutorial(next)
       return
     }
+    if (beginPendingFranceTutorial(countryTarget.difficulty, next)) return
     if (next.difficulty !== countryTarget.difficulty) {
       setLevelTransition({
         from: countryTarget.difficulty,
@@ -855,13 +864,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
         resetRoundState()
         return
       }
-      if (seaTutorialIsPending(progress, activeProfile.id)) {
-        setGameMode('seas')
-        setSeaStep(0)
-      } else if (riverTutorialIsPending(progress, activeProfile.id)) {
-        beginRiverTutorial(countryTarget)
-        return
-      } else if (beginFranceCatchUp(countryTarget)) {
+      if (beginSpecialCatchUp(countryTarget)) {
         return
       } else {
         setGameMode('country')
@@ -883,13 +886,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
 
   const finishOceanJourney = () => {
     localStorage.setItem(profileStorageKey(OCEAN_TUTORIAL_KEY, activeProfile.id), 'true')
-    if (seaTutorialIsPending(progress, activeProfile.id)) {
-      setGameMode('seas')
-      setSeaStep(0)
-    } else if (riverTutorialIsPending(progress, activeProfile.id)) {
-      beginRiverTutorial(countryTarget)
-      return
-    } else if (beginFranceCatchUp(countryTarget)) {
+    if (beginSpecialCatchUp(countryTarget)) {
       return
     } else {
       setGameMode('country')
@@ -913,7 +910,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       }
       localStorage.setItem(profileStorageKey(RIVER_TUTORIAL_KEY, activeProfile.id), 'true')
       setGameMode('country')
-      if (!specialIsReplay && beginFranceCatchUp(countryTarget)) return
+      if (!specialIsReplay && beginSpecialCatchUp(countryTarget)) return
       if (!specialIsReplay && countries.every((country) => progress[country.iso2]?.encounters)) {
         setWrongAnswers([])
         setLastSelected(undefined)
@@ -992,12 +989,8 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
 
     if (gameMode === 'seas' && seaTutorialFinished) {
       localStorage.setItem(profileStorageKey(SEA_TUTORIAL_KEY, activeProfile.id), 'true')
-      if (riverTutorialIsPending(progress, activeProfile.id)) {
-        beginRiverTutorial(countryTarget)
-        return
-      }
       setGameMode('country')
-      if (beginFranceCatchUp(countryTarget)) return
+      if (beginSpecialCatchUp(countryTarget)) return
       if (countries.every((country) => progress[country.iso2]?.encounters)) {
         setWrongAnswers([])
         setLastSelected(undefined)
@@ -1006,7 +999,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
         return
       }
       setLevelTransition({
-        from: 2,
+        from: 1,
         to: countryTarget.difficulty,
         total: countries.filter((country) => country.difficulty === countryTarget.difficulty).length,
       })
@@ -1095,7 +1088,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       : gameMode === 'oceans'
         ? oceanTutorialFinished ? oceansNeedReview ? 'Réviser les océans' : 'Chercher les pays' : 'Océan suivant'
         : gameMode === 'seas'
-          ? seaTutorialFinished ? 'Découvrir les fleuves' : 'Mer suivante'
+          ? seaTutorialFinished ? 'Continuer vers le niveau 2' : 'Mer suivante'
           : gameMode === 'rivers'
             ? riverTutorialFinished ? 'Continuer vers le niveau 3' : 'Fleuve suivant'
           : gameMode === 'regions'
@@ -1201,7 +1194,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                     : gameMode === 'oceans'
                       ? 'Bravo ! Tu connais maintenant les cinq grands océans. Partons à la recherche des pays !'
                       : gameMode === 'seas'
-                        ? 'Bravo ! Tu sais maintenant repérer huit mers essentielles. Découvrons maintenant les grands fleuves français.'
+                        ? 'Bravo ! Tu sais maintenant repérer huit mers essentielles. Le niveau 2 peut commencer !'
                         : gameMode === 'rivers'
                           ? 'Bravo ! Tu sais maintenant situer cinq grands fleuves français. Le niveau 3 peut commencer !'
                         : gameMode === 'regions'
