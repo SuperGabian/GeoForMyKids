@@ -93,6 +93,13 @@ export function WorldMap({
   const [pan, setPan] = useState<[number, number]>([0, 0])
   const [isDragging, setIsDragging] = useState(false)
   const dragStart = useRef<{ x: number; y: number; pan: [number, number] } | null>(null)
+  const activePointers = useRef(new Map<number, { x: number; y: number }>())
+  const pinchStart = useRef<{
+    distance: number
+    midpoint: [number, number]
+    zoom: number
+    pan: [number, number]
+  } | null>(null)
   const didDrag = useRef(false)
 
   useEffect(() => {
@@ -345,11 +352,50 @@ export function WorldMap({
         role="group"
         onPointerDown={(event) => {
           if (event.button !== 0) return
+          activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+          event.currentTarget.setPointerCapture?.(event.pointerId)
+          if (activePointers.current.size === 2) {
+            const [first, second] = [...activePointers.current.values()]
+            pinchStart.current = {
+              distance: Math.hypot(second.x - first.x, second.y - first.y),
+              midpoint: [(first.x + second.x) / 2, (first.y + second.y) / 2],
+              zoom: effectiveZoom,
+              pan: effectivePan,
+            }
+            dragStart.current = null
+            didDrag.current = true
+            setIsDragging(true)
+            return
+          }
           dragStart.current = { x: event.clientX, y: event.clientY, pan: effectivePan }
           didDrag.current = false
           setIsDragging(true)
         }}
         onPointerMove={(event) => {
+          if (activePointers.current.has(event.pointerId)) {
+            activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+          }
+          if (activePointers.current.size >= 2 && pinchStart.current) {
+            const [first, second] = [...activePointers.current.values()]
+            const distance = Math.hypot(second.x - first.x, second.y - first.y)
+            if (pinchStart.current.distance === 0) return
+            const nextZoom = Math.min(8, Math.max(1, pinchStart.current.zoom * distance / pinchStart.current.distance))
+            const bounds = event.currentTarget.getBoundingClientRect()
+            const scaleX = bounds.width ? 1000 / bounds.width : 1
+            const scaleY = bounds.height ? 550 / bounds.height : 1
+            const midpoint: [number, number] = [(first.x + second.x) / 2, (first.y + second.y) / 2]
+            const midpointDelta: [number, number] = [
+              (midpoint[0] - pinchStart.current.midpoint[0]) * scaleX,
+              (midpoint[1] - pinchStart.current.midpoint[1]) * scaleY,
+            ]
+            setManualZoom(nextZoom)
+            setPan(clampPan([
+              pinchStart.current.pan[0] + midpointDelta[0],
+              pinchStart.current.pan[1] + midpointDelta[1],
+            ], nextZoom))
+            didDrag.current = true
+            return
+          }
           if (!dragStart.current) return
           const bounds = event.currentTarget.getBoundingClientRect()
           const scaleX = bounds.width ? 1000 / bounds.width : 1
@@ -363,17 +409,21 @@ export function WorldMap({
           setPan(clampPan([dragStart.current.pan[0] + deltaX, dragStart.current.pan[1] + deltaY], effectiveZoom))
         }}
         onPointerUp={(event) => {
+          activePointers.current.delete(event.pointerId)
+          pinchStart.current = null
           dragStart.current = null
-          setIsDragging(false)
+          setIsDragging(activePointers.current.size > 0)
           if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
             event.currentTarget.releasePointerCapture?.(event.pointerId)
           }
-          window.setTimeout(() => { didDrag.current = false }, 0)
+          if (activePointers.current.size === 0) window.setTimeout(() => { didDrag.current = false }, 0)
         }}
-        onPointerCancel={() => {
+        onPointerCancel={(event) => {
+          activePointers.current.delete(event.pointerId)
+          pinchStart.current = null
           dragStart.current = null
           didDrag.current = false
-          setIsDragging(false)
+          setIsDragging(activePointers.current.size > 0)
         }}
         onPointerLeave={() => {
           if (!didDrag.current) {

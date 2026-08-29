@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "data:countries": "node scripts/generate-country-catalog.mjs",
+    "data:france": "node scripts/update-france-geography.mjs",
     "data:populations": "node scripts/update-populations.mjs",
     "preview": "vite preview",
     "test": "vitest run"

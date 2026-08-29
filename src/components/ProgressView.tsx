@@ -4,28 +4,36 @@ import { continentLabels, countries, countryDifficultyLevels, countryLevelNames,
 import type { PlayerProfile } from '../data/profiles'
 import { fr } from '../i18n/fr'
 import { CountryFlag } from './CountryFlag'
+import { oceans } from '../data/oceans'
+import { frenchRegions } from '../data/france'
 
-export type CountryProgress = Record<string, {
+export type ProgressItem = {
   encounters: number
   stage: number
   needsReview?: boolean
   nextReviewLevel?: number
-}>
+}
+
+export type CountryProgress = Record<string, ProgressItem>
+export type FoundationProgress = Record<string, ProgressItem>
 
 type ProgressViewProps = {
   progress: CountryProgress
+  foundationProgress: FoundationProgress
+  preferredRegionCode: string
   activeProfile: PlayerProfile
   profiles: PlayerProfile[]
   onClose: () => void
   onSelectProfile: (profileId: string) => void
   onCreateProfile: (name: string) => void
   onRenameProfile: (profileId: string, name: string) => void
+  onPreferredRegionChange: (regionCode: string) => void
   canInstallApp: boolean
   isAppInstalled: boolean
   onInstallApp: () => Promise<boolean>
 }
 
-export function ProgressView({ progress, activeProfile, profiles, onClose, onSelectProfile, onCreateProfile, onRenameProfile, canInstallApp, isAppInstalled, onInstallApp }: ProgressViewProps) {
+export function ProgressView({ progress, foundationProgress, preferredRegionCode, activeProfile, profiles, onClose, onSelectProfile, onCreateProfile, onRenameProfile, onPreferredRegionChange, canInstallApp, isAppInstalled, onInstallApp }: ProgressViewProps) {
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false)
   const [newProfileName, setNewProfileName] = useState('')
   const [profileError, setProfileError] = useState('')
@@ -38,6 +46,22 @@ export function ProgressView({ progress, activeProfile, profiles, onClose, onSel
     return (item?.stage ?? 0) >= 3 && !item?.needsReview
   })
   const continents = Object.keys(continentLabels) as ContinentCode[]
+  const continentKnowledge = [
+    { code: 'EU', name: 'Europe', keys: ['continent:EU'] },
+    { code: 'AS', name: 'Asie', keys: ['continent:AS'] },
+    { code: 'AF', name: 'Afrique', keys: ['continent:AF'] },
+    { code: 'OC', name: 'Océanie', keys: ['continent:OC'] },
+    { code: 'AM', name: 'Amérique', keys: ['continent:NA', 'continent:SA'] },
+    { code: 'AN', name: 'Antarctique', keys: ['continent:AN'] },
+  ]
+
+  const knowledgeStatus = (keys: string[]) => {
+    const items = keys.map((key) => foundationProgress[key])
+    const encountered = items.every((item) => item?.encounters)
+    const needsReview = items.some((item) => item?.needsReview)
+    const mastered = encountered && items.every((item) => item.stage >= 3 && !item.needsReview)
+    return { encountered, needsReview, mastered }
+  }
 
   useEffect(() => {
     if (!showProfileSwitcher) return
@@ -147,6 +171,55 @@ export function ProgressView({ progress, activeProfile, profiles, onClose, onSel
             )
           })}
         </div>
+      </section>
+
+      <section className="foundations-progress" aria-labelledby="foundations-title">
+        <div className="section-title">
+          <div><span className="eyebrow">Les bases</span><h2 id="foundations-title">Continents et océans</h2></div>
+          <span aria-hidden="true">🌍</span>
+        </div>
+        <div className="foundation-groups">
+          <div>
+            <h3>Continents</h3>
+            <div className="foundation-grid">
+              {continentKnowledge.map((item) => {
+                const status = knowledgeStatus(item.keys)
+                return (
+                  <article className={`foundation-card ${status.encountered ? 'is-discovered' : ''} ${status.needsReview ? 'needs-review' : ''} ${status.mastered ? 'is-mastered' : ''}`} key={item.code} data-foundation={`continent-${item.code}`}>
+                    <span aria-hidden="true">◉</span><strong>{item.name}</strong>
+                    <small>{status.needsReview ? 'À réviser' : status.mastered ? '✓ Bien connu' : status.encountered ? 'Découvert' : 'À découvrir'}</small>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+          <div>
+            <h3>Océans</h3>
+            <div className="foundation-grid">
+              {oceans.map((ocean) => {
+                const status = knowledgeStatus([`ocean:${ocean.code}`])
+                return (
+                  <article className={`foundation-card ${status.encountered ? 'is-discovered' : ''} ${status.needsReview ? 'needs-review' : ''} ${status.mastered ? 'is-mastered' : ''}`} key={ocean.code} data-foundation={`ocean-${ocean.code}`}>
+                    <span aria-hidden="true">≈</span><strong>{ocean.name}</strong>
+                    <small>{status.needsReview ? 'À réviser' : status.mastered ? '✓ Bien connu' : status.encountered ? 'Découvert' : 'À découvrir'}</small>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="region-preference" aria-labelledby="region-preference-title">
+        <div>
+          <span className="eyebrow">Mon territoire</span>
+          <h2 id="region-preference-title">La région à apprendre en détail</h2>
+          <p>Après le niveau 4, le jeu proposera les départements de cette région.</p>
+        </div>
+        <label htmlFor="preferred-region">Ma région</label>
+        <select id="preferred-region" value={preferredRegionCode} onChange={(event) => onPreferredRegionChange(event.target.value)}>
+          {frenchRegions.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
+        </select>
       </section>
 
       <section className="passport" aria-labelledby="passport-title">

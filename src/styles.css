@@ -132,6 +132,8 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 
 .topbar-actions { display: flex; align-items: center; gap: 16px; }
 
+.admin-badge { padding: 6px 9px; border: 1px solid #e4bd71; border-radius: 99px; color: #8a5317; background: #fff2d8; font-size: 9px; font-weight: 900; letter-spacing: .5px; text-transform: uppercase; }
+
 .journey-count {
   display: flex;
   align-items: center;
@@ -592,6 +594,18 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .world-map { width: 100%; height: calc(100% - 43px); display: block; overflow: visible; cursor: grab; touch-action: none; }
 .world-map.is-dragging, .world-map.is-dragging .country-shape { cursor: grabbing; }
 .world-map.is-dragging .map-viewport { transition: none; }
+
+.france-map-shell { position: relative; height: calc(100% - 70px); min-height: 430px; overflow: hidden; border-radius: 24px; background: radial-gradient(circle at 50% 45%, #f8fcfb, #e9f5f2); }
+.france-map { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.france-map.is-dragging { cursor: grabbing; }
+.france-map-viewport { transform-origin: 0 0; transition: transform .2s ease; }
+.france-map.is-dragging .france-map-viewport { transition: none; }
+.france-area { fill: #dcefe9; stroke: white; stroke-width: 2.2; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .16s ease, filter .16s ease; }
+.france-area:hover, .france-area:focus-visible { fill: #8dcebb; filter: drop-shadow(0 3px 4px rgba(20, 91, 79, .2)); outline: none; }
+.france-area.is-wrong { fill: #f2b09c; animation: country-wrong .45s ease; }
+.france-area.is-correct { fill: #49b889; filter: drop-shadow(0 5px 6px rgba(19, 123, 114, .25)); }
+.france-zoom-controls { top: 14px; right: 14px; }
+.france-zoom-controls > span { min-width: 38px; color: var(--teal-dark); font-size: 10px; font-weight: 900; text-align: center; }
 .ocean { fill: transparent; }
 .ocean-zone { cursor: pointer; outline: none; }
 .ocean-zone ellipse { fill: rgba(70, 157, 190, .055); stroke: rgba(54, 137, 169, .12); stroke-width: 1; transition: fill .18s ease, stroke .18s ease, filter .18s ease; }
@@ -1293,6 +1307,28 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .continent-card > div:first-child { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
 .continent-card strong { font-size: 12px; }
 .continent-card span { color: var(--muted); font-size: 10px; font-weight: 800; }
+
+.foundations-progress { margin-top: 18px; padding: 22px; border: 1px solid white; border-radius: 22px; background: rgba(255,255,255,.64); box-shadow: 0 12px 35px rgba(31, 77, 73, .06); }
+.foundation-groups { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; }
+.foundation-groups h3 { margin: 0 0 10px; color: var(--teal-dark); font-size: 13px; }
+.foundation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.foundation-card { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; min-height: 56px; padding: 10px 11px; border: 1px dashed #cbdad7; border-radius: 13px; color: #849b98; background: rgba(255,255,255,.45); }
+.foundation-card > span { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; color: white; background: #a9bfbb; font-size: 16px; }
+.foundation-card strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 11px; white-space: nowrap; }
+.foundation-card small { grid-column: 2; margin-top: -5px; font-size: 8px; font-weight: 900; letter-spacing: .25px; text-transform: uppercase; }
+.foundation-card.is-discovered { color: var(--ink); border-style: solid; background: white; }
+.foundation-card.is-mastered { border-color: #83cdb6; background: #eaf8f3; }
+.foundation-card.is-mastered > span { background: #38a77f; }
+.foundation-card.is-mastered small { color: #0d6c57; }
+.foundation-card.needs-review { border-color: #efb96f; background: #fff7e8; }
+.foundation-card.needs-review > span { background: #e6a64a; }
+.foundation-card.needs-review small { color: #9a5117; }
+
+.region-preference { margin-top: 18px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 14px; padding: 20px 22px; border: 1px solid #d9e8e5; border-radius: 20px; background: #f8fcfb; }
+.region-preference h2 { margin: 3px 0 4px; font-size: 20px; }
+.region-preference p { margin: 0; color: var(--muted); font-size: 11px; }
+.region-preference label { color: var(--teal-dark); font-size: 11px; font-weight: 900; }
+.region-preference select { min-width: 230px; padding: 11px 35px 11px 12px; border: 1px solid #bfd9d4; border-radius: 12px; color: var(--ink); background: white; font: inherit; font-size: 12px; font-weight: 750; }
 .progress-track { height: 6px; margin-top: 13px; border-radius: 99px; background: #e8f0ee; overflow: hidden; }
 .progress-track i { display: block; height: 100%; border-radius: inherit; background: var(--teal); transition: width .45s ease; }
 
@@ -1494,6 +1530,11 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
   .progress-summary { grid-template-columns: 1fr; gap: 8px; }
   .progress-summary > div { padding: 14px 17px; }
   .progress-summary strong { font-size: 23px; }
+  .foundation-groups { grid-template-columns: 1fr; }
+  .foundation-grid { grid-template-columns: 1fr; }
+  .region-preference { grid-template-columns: 1fr; }
+  .region-preference select { width: 100%; min-width: 0; }
+  .france-map-shell { min-height: 360px; }
   .pwa-install-card { grid-template-columns: auto minmax(0, 1fr); padding: 14px; }
   .pwa-install-card > button { grid-column: 1 / -1; width: 100%; }
   .continent-grid, .passport-grid { grid-template-columns: 1fr; }

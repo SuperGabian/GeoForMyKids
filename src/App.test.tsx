@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { countries, countriesByDifficulty, countryDifficultyLevels } from './data/countries'
+import { departmentsForRegion, frenchRegions } from './data/france'
 
 describe('GeoForMyKids game loop', () => {
   beforeEach(() => localStorage.clear())
@@ -53,8 +54,13 @@ describe('GeoForMyKids game loop', () => {
         expect(document.querySelector('.level-finale-visual')).toBeInTheDocument()
         expect(document.querySelectorAll('.success-celebration .particle')).toHaveLength(28)
       }
-      fireEvent.click(screen.getByRole('button', { name: index === journey.length - 1 ? /Découvrir les océans/ : /Continent suivant/ }))
+      fireEvent.click(screen.getByRole('button', { name: index === journey.length - 1 ? /Réviser les continents/ : /Continent suivant/ }))
     })
+
+    expect(screen.getByText('Révision · Continent 1 sur 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'France' }))
+    expect(screen.getByRole('heading', { name: 'Europe !' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Terminer les révisions/ }))
 
     expect(screen.getByRole('heading', { name: 'Océan Pacifique' })).toBeInTheDocument()
     expect(screen.getByText('Où se trouve l’océan Pacifique ?')).toBeInTheDocument()
@@ -78,11 +84,19 @@ describe('GeoForMyKids game loop', () => {
       if (index === oceanJourney.length - 1) {
         expect(document.querySelector('.level-finale-visual')).toHaveTextContent('Les 5 océans découverts !')
       }
-      fireEvent.click(screen.getByRole('button', { name: index === oceanJourney.length - 1 ? /Chercher les pays/ : /Océan suivant/ }))
+      fireEvent.click(screen.getByRole('button', { name: index === oceanJourney.length - 1 ? /Réviser les océans/ : /Océan suivant/ }))
     })
+
+    expect(screen.getByText('Révision · Océan 1 sur 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Océan Pacifique' }))
+    expect(screen.getByRole('heading', { name: 'Océan Pacifique !' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Terminer les révisions/ }))
 
     expect(localStorage.getItem('globidoo.tutorial.completed.v2')).toBe('true')
     expect(localStorage.getItem('globidoo.ocean-tutorial.completed.v1')).toBe('true')
+    const foundationProgress = JSON.parse(localStorage.getItem('globidoo.foundations.progress.v1')!)
+    expect(foundationProgress['continent:EU']).toMatchObject({ encounters: 2, stage: 3, needsReview: false })
+    expect(foundationProgress['ocean:PAC']).toMatchObject({ encounters: 2, stage: 3, needsReview: false })
     expect(screen.getByRole('heading', { name: 'France' })).toBeInTheDocument()
     expect(screen.getByLabelText('Couleurs des continents')).toBeInTheDocument()
   })
@@ -319,6 +333,79 @@ describe('GeoForMyKids game loop', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser le zoom' }))
     expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('translate(500px, 270px) scale(1)'))
+
+    const pointer = (type: string, pointerId: number, clientX: number, clientY: number) => {
+      const event = new MouseEvent(type, { bubbles: true, button: 0, clientX, clientY })
+      Object.defineProperty(event, 'pointerId', { value: pointerId })
+      return event
+    }
+    fireEvent(svg, pointer('pointerdown', 1, 100, 100))
+    fireEvent(svg, pointer('pointerdown', 2, 200, 100))
+    fireEvent(svg, pointer('pointermove', 2, 300, 100))
+    expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('scale(2)'))
+    fireEvent(svg, pointer('pointerup', 1, 100, 100))
+    fireEvent(svg, pointer('pointerup', 2, 300, 100))
+  })
+
+  it('unlocks every country and French test stage for the Admin profile', () => {
+    localStorage.setItem('globidoo.profiles.v1', JSON.stringify([{ id: 'default', name: 'Admin' }]))
+    render(<App />)
+
+    expect(screen.getByText('Mode Admin')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'France' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir un niveau' }))
+
+    countryDifficultyLevels.forEach((difficulty) => {
+      expect(screen.getByRole('button', { name: `Refaire le niveau ${difficulty}` })).toBeInTheDocument()
+    })
+    expect(screen.getByRole('button', { name: 'Tester les régions françaises' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Tester les départements de Provence-Alpes-Côte d.Azur/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: `Refaire le niveau ${countryDifficultyLevels.at(-1)}` }))
+    expect(screen.getByText(`Niveau ${countryDifficultyLevels.at(-1)} · Parcours libre`)).toBeInTheDocument()
+  })
+
+  it('inserts the French regions stage after country level 3', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
+      countries
+        .filter((country) => country.difficulty <= 3)
+        .map((country) => [country.iso2, { encounters: 1, stage: 3 }]),
+    )))
+    render(<App />)
+
+    frenchRegions.forEach((region, index) => {
+      expect(screen.getByText(`Niveau spécial · Régions de France · ${index + 1} sur ${frenchRegions.length}`)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: region.name })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: region.name }))
+      fireEvent.click(screen.getByRole('button', { name: index === frenchRegions.length - 1 ? /Continuer vers le niveau 4/ : /Région suivante/ }))
+    })
+
+    expect(localStorage.getItem('globidoo.france-regions.completed.v1')).toBe('true')
+    expect(screen.getByRole('dialog', { name: 'Niveau 4 débloqué !' })).toBeInTheDocument()
+  })
+
+  it('uses the chosen region for the department stage after country level 4', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.france-regions.completed.v1', 'true')
+    localStorage.setItem('globidoo.france.preferred-region.v1', '53')
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
+      countries
+        .filter((country) => country.difficulty <= 4)
+        .map((country) => [country.iso2, { encounters: 1, stage: 3 }]),
+    )))
+    const bretonDepartments = departmentsForRegion('53')
+    render(<App />)
+
+    bretonDepartments.forEach((department, index) => {
+      expect(screen.getByText(`Niveau spécial · Bretagne · ${index + 1} sur ${bretonDepartments.length}`)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: department.name })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: department.name }))
+      fireEvent.click(screen.getByRole('button', { name: index === bretonDepartments.length - 1 ? /Continuer vers le niveau 5/ : /Département suivant/ }))
+    })
+
+    expect(localStorage.getItem('globidoo.france-departments.completed.v1')).toBe('true')
+    expect(screen.getByRole('dialog', { name: 'Niveau 5 débloqué !' })).toBeInTheDocument()
   })
 
   it('contains the complete 195-country catalog without duplicates', () => {
@@ -572,6 +659,14 @@ describe('GeoForMyKids game loop', () => {
     fireEvent.click(screen.getByRole('button', { name: /Ma planète/ }))
     expect(screen.getByRole('heading', { name: 'Ta planète se remplit' })).toBeInTheDocument()
     expect(screen.getByText('Exploration par continent')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Continents et océans' })).toBeInTheDocument()
+    expect(document.querySelector('[data-foundation="continent-EU"]')).toHaveClass('is-mastered')
+    expect(document.querySelector('[data-foundation="ocean-PAC"]')).toHaveClass('is-mastered')
+
+    const regionSelect = screen.getByRole('combobox', { name: 'Ma région' })
+    expect(regionSelect).toHaveValue('93')
+    fireEvent.change(regionSelect, { target: { value: '53' } })
+    expect(localStorage.getItem('globidoo.france.preferred-region.v1')).toBe('53')
 
     const levels = [...document.querySelectorAll<HTMLElement>('.passport-level')]
     expect(levels.map((level) => Number(level.dataset.difficulty))).toEqual(countryDifficultyLevels)
@@ -587,6 +682,26 @@ describe('GeoForMyKids game loop', () => {
         countryCodes.forEach((iso2) => expect(countries.find((country) => country.iso2 === iso2)?.continent).toBe(group.dataset.continent))
       })
     })
+  })
+
+  it('resumes unfinished continent and ocean reviews on the next visit', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.foundations.progress.v1', JSON.stringify({
+      'continent:EU': { encounters: 1, stage: 2, needsReview: true },
+      'ocean:PAC': { encounters: 1, stage: 2, needsReview: true },
+    }))
+    render(<App />)
+
+    expect(screen.getByText('Révision · Continent 1 sur 1')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Europe' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'France' }))
+    fireEvent.click(screen.getByRole('button', { name: /Terminer les révisions/ }))
+
+    expect(screen.getByText('Révision · Océan 1 sur 1')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Océan Pacifique' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Ma planète/ }))
+    expect(document.querySelector('[data-foundation="continent-EU"]')).toHaveClass('is-mastered')
+    expect(document.querySelector('[data-foundation="ocean-PAC"]')).toHaveClass('needs-review')
   })
 
   it('keeps separate progress for the default and every newly created profile', () => {
