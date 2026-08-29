@@ -601,11 +601,13 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .france-map-viewport { transform-origin: 0 0; transition: transform .2s ease; }
 .france-map.is-dragging .france-map-viewport { transition: none; }
 .france-area { fill: #dcefe9; stroke: white; stroke-width: 2.2; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .16s ease, filter .16s ease; }
-.france-area:hover, .france-area:focus-visible { fill: #8dcebb; filter: drop-shadow(0 3px 4px rgba(20, 91, 79, .2)); outline: none; }
+.france-area:focus { outline: none !important; }
+.france-area:hover, .france-area:focus-visible { fill: #8dcebb; filter: drop-shadow(0 3px 4px rgba(20, 91, 79, .2)); outline: none !important; }
 .france-area.is-wrong { fill: #f2b09c; animation: country-wrong .45s ease; }
 .france-area.is-correct { fill: #49b889; filter: drop-shadow(0 5px 6px rgba(19, 123, 114, .25)); }
-.france-zoom-controls { top: 14px; right: 14px; bottom: auto; }
-.france-zoom-controls > span { min-width: 38px; color: var(--teal-dark); font-size: 10px; font-weight: 900; text-align: center; }
+.france-map-shell .france-zoom-controls { top: 14px; right: 14px; bottom: auto; left: auto; width: auto; height: auto; min-height: 0; padding: 3px; }
+.france-level-picker { position: absolute; z-index: 6; top: 14px; left: 14px; min-height: 34px; padding: 0 13px; border: 1px solid rgba(22, 101, 94, .18); border-radius: 10px; color: var(--teal-dark); background: rgba(255,255,255,.94); box-shadow: 0 7px 18px rgba(31, 74, 71, .1); cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .5px; }
+.france-level-picker:hover { color: white; background: var(--teal); }
 .ocean { fill: transparent; }
 .ocean-zone { cursor: pointer; outline: none; }
 .ocean-zone ellipse { fill: rgba(70, 157, 190, .055); stroke: rgba(54, 137, 169, .12); stroke-width: 1; transition: fill .18s ease, stroke .18s ease, filter .18s ease; }

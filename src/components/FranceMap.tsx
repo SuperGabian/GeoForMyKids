@@ -11,6 +11,7 @@ type FranceMapProps = {
   isCorrect: boolean
   disabled?: boolean
   onSelect: (area: FrenchArea) => void
+  onLevelPickerClick?: () => void
 }
 
 function clampPan([x, y]: [number, number], zoom: number): [number, number] {
@@ -19,7 +20,7 @@ function clampPan([x, y]: [number, number], zoom: number): [number, number] {
   return [Math.min(limitX, Math.max(-limitX, x)), Math.min(limitY, Math.max(-limitY, y))]
 }
 
-export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled = false, onSelect }: FranceMapProps) {
+export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled = false, onSelect, onLevelPickerClick }: FranceMapProps) {
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState<[number, number]>([0, 0])
   const [dragging, setDragging] = useState(false)
@@ -43,9 +44,9 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
 
   return (
     <div className="france-map-shell" aria-label="Carte administrative de la France">
+      {onLevelPickerClick ? <button className="france-level-picker" type="button" onClick={onLevelPickerClick}>Niveaux</button> : null}
       <div className="zoom-controls france-zoom-controls" aria-label="Régler le niveau de zoom">
         <button type="button" aria-label="Dézoomer" disabled={zoom <= 1} onClick={() => setZoom((value) => Math.max(1, value - .5))}><Minus size={15} /></button>
-        <span>{zoom.toFixed(1)}×</span>
         <button type="button" aria-label="Zoomer" disabled={zoom >= 6} onClick={() => setZoom((value) => Math.min(6, value + .5))}><Plus size={15} /></button>
         <button type="button" aria-label="Réinitialiser le zoom" disabled={zoom === 1 && pan[0] === 0 && pan[1] === 0} onClick={() => { setZoom(1); setPan([0, 0]) }}><RotateCcw size={14} /></button>
       </div>
@@ -132,7 +133,10 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
                 tabIndex={disabled ? -1 : 0}
                 aria-label={area.name}
                 aria-disabled={disabled}
-                onClick={select}
+                onClick={(event) => {
+                  event.currentTarget.blur()
+                  select()
+                }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault()

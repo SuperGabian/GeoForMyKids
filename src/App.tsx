@@ -120,6 +120,9 @@ type ReplaySession = {
   returnCountryIso: string
   queue: string[]
   index: number
+  returnMode?: 'regions' | 'departments'
+  returnRegionStep?: number
+  returnDepartmentStep?: number
 }
 type FoundationReview = {
   mode: 'continents' | 'oceans'
@@ -557,8 +560,12 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       returnCountryIso: replaySession?.returnCountryIso ?? countryTarget.iso2,
       queue,
       index: 0,
+      returnMode: replaySession?.returnMode ?? (gameMode === 'regions' || gameMode === 'departments' ? gameMode : undefined),
+      returnRegionStep: replaySession?.returnRegionStep ?? (gameMode === 'regions' ? regionStep : undefined),
+      returnDepartmentStep: replaySession?.returnDepartmentStep ?? (gameMode === 'departments' ? departmentStep : undefined),
     })
     setCountryTarget(countryByIso[queue[0]])
+    setGameMode('country')
     setShowLevelPicker(false)
     resetRoundState()
   }
@@ -566,6 +573,11 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   const returnToCurrentJourney = () => {
     if (!replaySession) return
     setCountryTarget(countryByIso[replaySession.returnCountryIso])
+    if (replaySession.returnMode) {
+      setGameMode(replaySession.returnMode)
+      if (replaySession.returnMode === 'regions') setRegionStep(replaySession.returnRegionStep ?? 0)
+      if (replaySession.returnMode === 'departments') setDepartmentStep(replaySession.returnDepartmentStep ?? 0)
+    }
     setReplaySession(undefined)
     setShowLevelPicker(false)
     resetRoundState()
@@ -691,6 +703,11 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
       }
 
       setCountryTarget(countryByIso[replaySession.returnCountryIso])
+      if (replaySession.returnMode) {
+        setGameMode(replaySession.returnMode)
+        if (replaySession.returnMode === 'regions') setRegionStep(replaySession.returnRegionStep ?? 0)
+        if (replaySession.returnMode === 'departments') setDepartmentStep(replaySession.returnDepartmentStep ?? 0)
+      }
       setReplaySession(undefined)
       resetRoundState()
       return
@@ -1110,7 +1127,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
               remembered={remembered}
               onNext={nextCountryRound}
               nextLabel={replaySession
-                ? replaySession.index === replaySession.queue.length - 1 ? `Revenir au niveau ${replaySession.returnLevel}` : 'Pays suivant à revoir'
+                ? replaySession.index === replaySession.queue.length - 1
+                  ? replaySession.returnMode ? 'Revenir au niveau spécial' : `Revenir au niveau ${replaySession.returnLevel}`
+                  : 'Pays suivant à revoir'
                 : reviewSession
                 ? reviewSession.index === reviewSession.queue.length - 1 ? 'Terminer les révisions' : 'Révision suivante'
                 : undefined}
@@ -1180,6 +1199,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
               isCorrect={isCorrect}
               disabled={isCorrect || Boolean(levelTransition)}
               onSelect={submitFrenchArea}
+              onLevelPickerClick={isAdmin || replayableLevels.length > 0 ? () => setShowLevelPicker(true) : undefined}
             />
           ) : <WorldMap
             gameMode={gameMode}
@@ -1275,9 +1295,11 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                 </>
               ) : null}
               {replaySession ? (
-                <button className="is-current-journey" type="button" aria-label={`Revenir au niveau ${replaySession.returnLevel}`} onClick={returnToCurrentJourney}>
+                <button className="is-current-journey" type="button" aria-label={replaySession.returnMode ? 'Revenir au niveau spécial' : `Revenir au niveau ${replaySession.returnLevel}`} onClick={returnToCurrentJourney}>
                   <span>Parcours en cours</span>
-                  <strong>Niveau {replaySession.returnLevel} · {countryLevelNames[replaySession.returnLevel]}</strong>
+                  <strong>{replaySession.returnMode
+                    ? replaySession.returnMode === 'regions' ? 'Régions françaises' : `Départements · ${preferredRegion.name}`
+                    : `Niveau ${replaySession.returnLevel} · ${countryLevelNames[replaySession.returnLevel]}`}</strong>
                   <small>Reprendre là où tu t’étais arrêté</small>
                 </button>
               ) : null}

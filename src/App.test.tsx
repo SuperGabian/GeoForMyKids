@@ -361,8 +361,15 @@ describe('GeoForMyKids game loop', () => {
     expect(screen.getByRole('button', { name: 'Tester les régions françaises' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Tester les départements de Provence-Alpes-Côte d.Azur/ })).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: 'Tester les régions françaises' }))
+    expect(screen.getByRole('button', { name: 'Niveaux' })).toBeInTheDocument()
+    expect(screen.queryByText('1.0×')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Niveaux' }))
     fireEvent.click(screen.getByRole('button', { name: `Refaire le niveau ${countryDifficultyLevels.at(-1)}` }))
     expect(screen.getByText(`Niveau ${countryDifficultyLevels.at(-1)} · Parcours libre`)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir un niveau' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Revenir au niveau spécial' }))
+    expect(screen.getByText(`Niveau spécial · Régions de France · 1 sur ${frenchRegions.length}`)).toBeInTheDocument()
   })
 
   it('inserts the French regions stage after country level 3', () => {
@@ -392,6 +399,7 @@ describe('GeoForMyKids game loop', () => {
         fireEvent(regionButton, pointer('pointerup'))
         fireEvent.click(regionButton)
         expect(capturePointer).not.toHaveBeenCalled()
+        expect(document.activeElement).not.toBe(regionButton)
       } else {
         fireEvent.click(regionButton)
       }
