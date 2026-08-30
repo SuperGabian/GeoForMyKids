@@ -44,6 +44,7 @@ const FOUNDATION_PROGRESS_KEY = 'globidoo.foundations.progress.v1'
 const PREFERRED_REGION_KEY = 'globidoo.france.preferred-region.v1'
 const REGION_TUTORIAL_KEY = 'globidoo.france-regions.completed.v1'
 const DEPARTMENT_TUTORIAL_KEY = 'globidoo.france-departments.completed.v1'
+const LEVEL_SIX_CHECKPOINT_KEY = 'globidoo.level-six-checkpoint.completed.v1'
 
 type TutorialContinentCode = ContinentCode | 'AN'
 type ContinentTarget = {
@@ -298,12 +299,28 @@ function countriesDueForReview(progress: CountryProgress, completedLevel: Countr
   })
 }
 
-function createJourneyStart(progress: CountryProgress) {
+function levelSixCheckpointIsPending(progress: CountryProgress, profileId: string, isAdmin = false) {
+  if (isAdmin) return false
+  try {
+    if (localStorage.getItem(profileStorageKey(LEVEL_SIX_CHECKPOINT_KEY, profileId)) === 'true') return false
+  } catch {
+    return false
+  }
+  const firstSixLevelsCompleted = countries
+    .filter((country) => country.difficulty <= 6)
+    .every((country) => progress[country.iso2]?.encounters)
+  const laterLevelStarted = countries
+    .filter((country) => country.difficulty > 6)
+    .some((country) => progress[country.iso2]?.encounters)
+  return firstSixLevelsCompleted && !laterLevelStarted
+}
+
+function createJourneyStart(progress: CountryProgress, postponeReviews = false) {
   const unseen = countries.filter((country) => !progress[country.iso2]?.encounters)
   const completedLevel = unseen.length
     ? Math.max(0, Math.min(...unseen.map((country) => country.difficulty)) - 1)
     : countryDifficultyLevels.at(-1)!
-  const dueCountries = completedLevel > 0
+  const dueCountries = completedLevel > 0 && !postponeReviews
     ? countriesDueForReview(progress, completedLevel as Country['difficulty'])
     : []
   const reviewSession = dueCountries.length ? {
@@ -419,7 +436,8 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   const [foundationProgress, setFoundationProgress] = useState<FoundationProgress>(() => loadFoundationProgress(activeProfile.id))
   const [preferredRegionCode, setPreferredRegionCode] = useState(() => loadPreferredRegion(activeProfile.id))
   const [gameMode, setGameMode] = useState<GameMode>(() => initialMode(progress, foundationProgress, activeProfile.id, isAdmin))
-  const [journeyStart] = useState(() => createJourneyStart(progress))
+  const checkpointPendingAtStart = levelSixCheckpointIsPending(progress, activeProfile.id, isAdmin)
+  const [journeyStart] = useState(() => createJourneyStart(progress, checkpointPendingAtStart))
   const initiallyCompleted = gameMode === 'country'
     && countries.every((country) => progress[country.iso2]?.encounters)
     && !journeyStart.reviewSession
@@ -442,6 +460,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   const [remembered, setRemembered] = useState(false)
   const [allCountriesCompleted, setAllCountriesCompleted] = useState(initiallyCompleted)
   const [levelTransition, setLevelTransition] = useState<LevelTransition>()
+  const [showLevelSixCheckpoint, setShowLevelSixCheckpoint] = useState(checkpointPendingAtStart)
   const startedAt = useRef(performance.now())
 
   const continentTargetIndex = foundationReview?.mode === 'continents' ? foundationReview.queue[foundationReview.index] : tutorialStep
@@ -486,6 +505,12 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
         .every((country) => progress[country.iso2]?.encounters)
     )
   ))
+  const levelSixReviewCountries = countries.filter((country) => {
+    const item = progress[country.iso2]
+    return country.difficulty <= 6
+      && Boolean(item?.encounters)
+      && ((item?.stage ?? 0) < 3 || Boolean(item?.needsReview))
+  })
 
   useEffect(() => {
     if (!showLevelPicker) return
@@ -504,6 +529,36 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     setRemembered(false)
     setAllCountriesCompleted(false)
     startedAt.current = performance.now()
+  }
+
+  const completeLevelSixCheckpoint = () => {
+    localStorage.setItem(profileStorageKey(LEVEL_SIX_CHECKPOINT_KEY, activeProfile.id), 'true')
+    setShowLevelSixCheckpoint(false)
+  }
+
+  const continueToLevelSeven = () => {
+    completeLevelSixCheckpoint()
+    setLevelTransition({
+      from: 6,
+      to: countryTarget.difficulty,
+      total: countries.filter((country) => country.difficulty === countryTarget.difficulty).length,
+    })
+    resetRoundState()
+  }
+
+  const reviewFirstSixLevels = () => {
+    if (!levelSixReviewCountries.length) {
+      continueToLevelSeven()
+      return
+    }
+    completeLevelSixCheckpoint()
+    setReviewSession({
+      completedLevel: 6,
+      queue: levelSixReviewCountries.map((country) => country.iso2),
+      index: 0,
+    })
+    setCountryTarget(levelSixReviewCountries[0])
+    resetRoundState()
   }
 
   const changePreferredRegion = (regionCode: string) => {
@@ -807,6 +862,14 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     const next = chooseNextCountry(countryTarget, progress)
     const levelFinished = !next || next.difficulty > countryTarget.difficulty
     if (levelFinished) {
+      if (!isAdmin
+        && countryTarget.difficulty === 6
+        && next?.difficulty === 7
+        && localStorage.getItem(profileStorageKey(LEVEL_SIX_CHECKPOINT_KEY, activeProfile.id)) !== 'true') {
+        setCountryTarget(next)
+        setShowLevelSixCheckpoint(true)
+        return
+      }
       const dueCountries = countriesDueForReview(progress, countryTarget.difficulty)
       if (dueCountries.length) {
         setReviewSession({
@@ -1426,6 +1489,34 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
               })}
             </div>
             <button className="text-button level-picker-cancel" type="button" onClick={() => setShowLevelPicker(false)}>Annuler</button>
+          </section>
+        </div>
+      ) : null}
+
+      {showLevelSixCheckpoint ? (
+        <div className="level-transition-overlay" role="dialog" aria-modal="true" aria-labelledby="level-six-checkpoint-title">
+          <div className="level-transition-rays" aria-hidden="true" />
+          {Array.from({ length: 36 }, (_, index) => <i key={index} className={`level-transition-particle particle-${(index % 12) + 1}`} aria-hidden="true" />)}
+          <section className="level-transition-card level-six-checkpoint-card">
+            <span className="eyebrow">Une grande étape franchie !</span>
+            <div className="level-six-checkpoint-globe" aria-hidden="true">🌍</div>
+            <h2 id="level-six-checkpoint-title">Bravo, explorateur !</h2>
+            <h3>Tu as déjà localisé les pays les plus connus.</h3>
+            <p>Avant de découvrir la suite, il est préférable de bien connaître tous les pays des six premiers niveaux.</p>
+            <div className="level-six-checkpoint-summary">
+              <strong>{levelSixReviewCountries.length}</strong>
+              <span>{levelSixReviewCountries.length > 1 ? 'pays à consolider' : 'pays à consolider'}</span>
+            </div>
+            <div className="level-six-checkpoint-actions">
+              {levelSixReviewCountries.length ? (
+                <button className="primary-button" type="button" autoFocus onClick={reviewFirstSixLevels}>
+                  Réviser les pays à consolider<RotateCcw size={18} />
+                </button>
+              ) : null}
+              <button className={levelSixReviewCountries.length ? 'checkpoint-continue-button' : 'primary-button'} type="button" autoFocus={!levelSixReviewCountries.length} onClick={continueToLevelSeven}>
+                Accéder au niveau 7<ArrowRight size={18} />
+              </button>
+            </div>
           </section>
         </div>
       ) : null}

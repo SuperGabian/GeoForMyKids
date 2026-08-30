@@ -576,6 +576,60 @@ describe('GeoForMyKids game loop', () => {
     expect(screen.queryByRole('dialog', { name: 'Niveau 2 débloqué !' })).not.toBeInTheDocument()
   })
 
+  it('offers a consolidation review after level 6 before unlocking level 7', () => {
+    completeTutorials()
+    const lastLevelSixCountry = countries.find((country) => country.difficulty === 6)!
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
+      countries
+        .filter((country) => country.difficulty <= 6 && country.iso2 !== lastLevelSixCountry.iso2)
+        .map((country) => [country.iso2, {
+          encounters: 1,
+          stage: country.iso2 === 'FR' ? 2 : 3,
+          needsReview: false,
+        }]),
+    )))
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: lastLevelSixCountry.name }))
+    fireEvent.click(screen.getByRole('button', { name: /Pays suivant/ }))
+
+    expect(screen.getByRole('dialog', { name: 'Bravo, explorateur !' })).toBeInTheDocument()
+    expect(screen.getByText('Tu as déjà localisé les pays les plus connus.')).toBeInTheDocument()
+    expect(screen.getByText('1', { selector: '.level-six-checkpoint-summary strong' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Réviser les pays à consolider/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Accéder au niveau 7' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Réviser les pays à consolider/ }))
+    expect(screen.getByText('Révision · Après le niveau 6')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'France' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'France' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Terminer les révisions' }))
+
+    expect(screen.getByRole('dialog', { name: 'Niveau 7 débloqué !' })).toBeInTheDocument()
+    expect(localStorage.getItem('globidoo.level-six-checkpoint.completed.v1')).toBe('true')
+  })
+
+  it('can skip the level 6 consolidation and continue directly to level 7', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
+      countries
+        .filter((country) => country.difficulty <= 6)
+        .map((country) => [country.iso2, {
+          encounters: 1,
+          stage: country.iso2 === 'FR' ? 2 : 3,
+          needsReview: false,
+        }]),
+    )))
+    render(<App />)
+
+    expect(screen.getByRole('dialog', { name: 'Bravo, explorateur !' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Accéder au niveau 7' }))
+
+    expect(screen.getByRole('dialog', { name: 'Niveau 7 débloqué !' })).toBeInTheDocument()
+    expect(screen.getByText('Niveau 6 terminé !')).toBeInTheDocument()
+    expect(localStorage.getItem('globidoo.level-six-checkpoint.completed.v1')).toBe('true')
+  })
+
   it('opens previous levels from the progress bar and flags a mastered country for review', () => {
     completeTutorials()
     localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
