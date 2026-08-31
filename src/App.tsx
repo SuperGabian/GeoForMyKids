@@ -535,6 +535,17 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     setShowLevelSixCheckpoint(false)
   }
 
+  const previewLevelSixCheckpoint = () => {
+    const levelSevenCountry = countries.find((country) => country.difficulty === 7)
+    if (levelSevenCountry) setCountryTarget(levelSevenCountry)
+    setGameMode('country')
+    setReplaySession(undefined)
+    setReviewSession(undefined)
+    setLevelTransition(undefined)
+    setShowLevelPicker(false)
+    setShowLevelSixCheckpoint(true)
+  }
+
   const continueToLevelSeven = () => {
     completeLevelSixCheckpoint()
     setLevelTransition({
@@ -1469,6 +1480,9 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
             <div className="level-picker-grid">
               {isAdmin ? (
                 <>
+                  <button type="button" aria-label="Tester le panneau après le niveau 6" onClick={previewLevelSixCheckpoint}>
+                    <span>Test Admin</span><strong>Panneau après le niveau 6</strong><small>Ouverture immédiate</small>
+                  </button>
                   <button type="button" aria-label="Tester les fleuves français" onClick={() => beginRiverTutorial(countryTarget, true)}>
                     <span>Niveau spécial</span><strong>Fleuves français</strong><small>{frenchRivers.length} fleuves</small>
                   </button>
