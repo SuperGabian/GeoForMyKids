@@ -92,6 +92,7 @@ export function WorldMap({
   const [manualZoom, setManualZoom] = useState<number | null>(null)
   const [pan, setPan] = useState<[number, number]>([0, 0])
   const [isDragging, setIsDragging] = useState(false)
+  const mapShellRef = useRef<HTMLDivElement>(null)
   const dragStart = useRef<{ x: number; y: number; pan: [number, number] } | null>(null)
   const activePointers = useRef(new Map<number, { x: number; y: number }>())
   const pinchStart = useRef<{
@@ -211,6 +212,20 @@ export function WorldMap({
   const effectivePan = clampPan(pan, effectiveZoom)
   const effectiveFocus = { ...focus, zoom: effectiveZoom }
 
+  useEffect(() => {
+    const mapShell = mapShellRef.current
+    if (!mapShell) return
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      const direction = event.deltaY < 0 ? 1 : -1
+      setManualZoom((currentZoom) => Math.min(8, Math.max(1, (currentZoom ?? focus.zoom) + direction * .25)))
+    }
+
+    mapShell.addEventListener('wheel', handleWheel, { passive: false })
+    return () => mapShell.removeEventListener('wheel', handleWheel)
+  }, [focus.zoom])
+
   const panTransform = `translate(${effectivePan[0]}px, ${effectivePan[1]}px)`
   const viewportTransform = `translate(500px, 270px) scale(${effectiveZoom}) translate(${-focus.center[0]}px, ${-focus.center[1]}px)`
   const wrongCountry = gameMode === 'country' && !isCorrect && showWrongMarker
@@ -239,15 +254,11 @@ export function WorldMap({
 
   return (
     <div
+      ref={mapShellRef}
       className={`map-shell ${levelProgress ? 'has-level-progress' : ''}`}
       aria-label="Carte du monde interactive"
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
       tabIndex={0}
-      onWheel={(event) => {
-        event.preventDefault()
-        const direction = event.deltaY < 0 ? 1 : -1
-        setManualZoom((currentZoom) => Math.min(8, Math.max(1, (currentZoom ?? focus.zoom) + direction * .25)))
-      }}
       onKeyDown={(event) => {
         if ((event.target as Element).closest('input, button')) return
         const movement: Partial<Record<string, [number, number]>> = {

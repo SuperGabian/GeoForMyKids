@@ -407,7 +407,9 @@ describe('GeoForMyKids game loop', () => {
     expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('scale(1)'))
 
     const map = screen.getByLabelText('Carte du monde interactive')
-    fireEvent.wheel(map, { deltaY: -100 })
+    const zoomInWheel = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 })
+    fireEvent(map, zoomInWheel)
+    expect(zoomInWheel.defaultPrevented).toBe(true)
     expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('scale(1.25)'))
     fireEvent.wheel(map, { deltaY: 100 })
     expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('scale(1)'))
