@@ -598,7 +598,9 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .france-map-shell { position: relative; height: calc(100% - 70px); min-height: 430px; overflow: hidden; border-radius: 24px; background: radial-gradient(circle at 50% 45%, #f8fcfb, #e9f5f2); }
 .france-map { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
 .france-map.is-dragging { cursor: grabbing; }
-.france-map-viewport { transform-origin: 0 0; transition: transform .2s ease; }
+.france-map-pan-viewport, .france-map-viewport { transform-origin: 0 0; }
+.france-map-pan-viewport { transition: none; }
+.france-map-viewport { transition: transform .2s ease; }
 .france-map.is-dragging .france-map-viewport { transition: none; }
 .france-area { fill: #dcefe9; stroke: white; stroke-width: 2.2; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .16s ease, filter .16s ease; }
 .france-area:focus { outline: none !important; }
@@ -636,6 +638,11 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
   transform-box: view-box;
   transform-origin: 0 0;
   transition: transform .72s cubic-bezier(.22, .8, .28, 1);
+}
+.map-pan-viewport {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  transition: none;
 }
 
 .country-shape {

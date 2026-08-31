@@ -121,31 +121,33 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
           event.stopPropagation()
         }}
       >
-        <g className="france-map-viewport" style={{ transform: `translate(${500 + effectivePan[0]}px, ${275 + effectivePan[1]}px) scale(${zoom}) translate(-500px, -275px)` }}>
-          {areas.map((area) => {
-            const select = () => { if (!disabled) onSelect(area) }
-            return (
-              <path
-                key={area.code}
-                d={path(area.geometry) ?? ''}
-                className={`france-area ${selectedCode === area.code && !isCorrect ? 'is-wrong' : ''} ${targetCode === area.code && isCorrect ? 'is-correct' : ''}`}
-                role="button"
-                tabIndex={disabled ? -1 : 0}
-                aria-label={area.name}
-                aria-disabled={disabled}
-                onClick={(event) => {
-                  event.currentTarget.blur()
-                  select()
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
+        <g className="france-map-pan-viewport" style={{ transform: `translate(${effectivePan[0]}px, ${effectivePan[1]}px)` }}>
+          <g className="france-map-viewport" style={{ transform: `translate(500px, 275px) scale(${zoom}) translate(-500px, -275px)` }}>
+            {areas.map((area) => {
+              const select = () => { if (!disabled) onSelect(area) }
+              return (
+                <path
+                  key={area.code}
+                  d={path(area.geometry) ?? ''}
+                  className={`france-area ${selectedCode === area.code && !isCorrect ? 'is-wrong' : ''} ${targetCode === area.code && isCorrect ? 'is-correct' : ''}`}
+                  role="button"
+                  tabIndex={disabled ? -1 : 0}
+                  aria-label={area.name}
+                  aria-disabled={disabled}
+                  onClick={(event) => {
+                    event.currentTarget.blur()
                     select()
-                  }
-                }}
-              />
-            )
-          })}
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      select()
+                    }
+                  }}
+                />
+              )
+            })}
+          </g>
         </g>
       </svg>
     </div>

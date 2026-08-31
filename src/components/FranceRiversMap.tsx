@@ -121,34 +121,36 @@ export function FranceRiversMap({ rivers, targetCode, selectedCode, isCorrect, d
           event.stopPropagation()
         }}
       >
-        <g className="france-map-viewport" style={{ transform: `translate(${500 + effectivePan[0]}px, ${275 + effectivePan[1]}px) scale(${zoom}) translate(-500px, -275px)` }}>
-          <g className="river-france-background" aria-hidden="true">
-            {frenchRegions.map((region) => <path key={region.code} d={path(region.geometry) ?? ''} />)}
-          </g>
-          <g className="river-lines">
-            {rivers.map((river) => {
-              const select = () => { if (!disabled) onSelect(river) }
-              return (
-                <g className={`river-choice ${selectedCode === river.code && !isCorrect ? 'is-wrong' : ''} ${targetCode === river.code && isCorrect ? 'is-correct' : ''}`} key={river.code}>
-                  <path className="river-line" d={path(river.geometry) ?? ''} aria-hidden="true" />
-                  <path
-                    className="river-hit-area"
-                    d={path(river.geometry) ?? ''}
-                    role="button"
-                    tabIndex={disabled ? -1 : 0}
-                    aria-label={river.name}
-                    aria-disabled={disabled}
-                    onClick={(event) => { event.currentTarget.blur(); select() }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        select()
-                      }
-                    }}
-                  />
-                </g>
-              )
-            })}
+        <g className="france-map-pan-viewport" style={{ transform: `translate(${effectivePan[0]}px, ${effectivePan[1]}px)` }}>
+          <g className="france-map-viewport" style={{ transform: `translate(500px, 275px) scale(${zoom}) translate(-500px, -275px)` }}>
+            <g className="river-france-background" aria-hidden="true">
+              {frenchRegions.map((region) => <path key={region.code} d={path(region.geometry) ?? ''} />)}
+            </g>
+            <g className="river-lines">
+              {rivers.map((river) => {
+                const select = () => { if (!disabled) onSelect(river) }
+                return (
+                  <g className={`river-choice ${selectedCode === river.code && !isCorrect ? 'is-wrong' : ''} ${targetCode === river.code && isCorrect ? 'is-correct' : ''}`} key={river.code}>
+                    <path className="river-line" d={path(river.geometry) ?? ''} aria-hidden="true" />
+                    <path
+                      className="river-hit-area"
+                      d={path(river.geometry) ?? ''}
+                      role="button"
+                      tabIndex={disabled ? -1 : 0}
+                      aria-label={river.name}
+                      aria-disabled={disabled}
+                      onClick={(event) => { event.currentTarget.blur(); select() }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          select()
+                        }
+                      }}
+                    />
+                  </g>
+                )
+              })}
+            </g>
           </g>
         </g>
       </svg>

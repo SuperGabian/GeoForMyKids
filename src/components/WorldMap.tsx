@@ -211,7 +211,8 @@ export function WorldMap({
   const effectivePan = clampPan(pan, effectiveZoom)
   const effectiveFocus = { ...focus, zoom: effectiveZoom }
 
-  const viewportTransform = `translate(${500 + effectivePan[0]}px, ${270 + effectivePan[1]}px) scale(${effectiveZoom}) translate(${-focus.center[0]}px, ${-focus.center[1]}px)`
+  const panTransform = `translate(${effectivePan[0]}px, ${effectivePan[1]}px)`
+  const viewportTransform = `translate(500px, 270px) scale(${effectiveZoom}) translate(${-focus.center[0]}px, ${-focus.center[1]}px)`
   const wrongCountry = gameMode === 'country' && !isCorrect && showWrongMarker
     ? mapCountries.find((country) => country.iso2 === lastSelectedIso)
     : undefined
@@ -448,7 +449,8 @@ export function WorldMap({
           event.stopPropagation()
         }}
       >
-        <g className="map-viewport" style={{ transform: viewportTransform }}>
+        <g className="map-pan-viewport" style={{ transform: panTransform }}>
+          <g className="map-viewport" style={{ transform: viewportTransform }}>
           <path className="ocean" d={path({ type: 'Sphere' }) ?? ''} />
           {gameMode === 'oceans' ? (
             <g className="ocean-zones">
@@ -668,6 +670,7 @@ export function WorldMap({
               onClick={() => !disabled && onSelect(targetIso, targetName, targetContinent)}
             />
           ) : null}
+          </g>
         </g>
 
         {wrongCountry && wrongMarkerPosition ? (

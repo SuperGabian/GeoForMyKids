@@ -414,15 +414,16 @@ describe('GeoForMyKids game loop', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Zoomer' }))
     fireEvent.keyDown(map, { key: 'ArrowRight' })
-    expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('translate(456px, 270px)'))
+    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(-44px, 0px)'))
 
     const svg = document.querySelector<SVGSVGElement>('.world-map')!
     fireEvent(svg, new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 100 }))
     fireEvent(svg, new MouseEvent('pointermove', { bubbles: true, clientX: 140, clientY: 125 }))
-    expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('translate(496px, 295px)'))
+    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(-4px, 25px)'))
     fireEvent(svg, new MouseEvent('pointerup', { bubbles: true }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser le zoom' }))
+    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(0px, 0px)'))
     expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('translate(500px, 270px) scale(1)'))
 
     const pointer = (type: string, pointerId: number, clientX: number, clientY: number) => {
