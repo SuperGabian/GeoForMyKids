@@ -463,6 +463,14 @@ describe('GeoForMyKids game loop', () => {
     fireEvent(svg, pointer('pointermove', 11, 140, 100))
     expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(41px, 0px)'))
     fireEvent(svg, pointer('pointerup', 11, 140, 100))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser le zoom' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Zoomer' }))
+    fireEvent.mouseDown(svg, { button: 0, clientX: 100, clientY: 100 })
+    fireEvent.mouseMove(window, { buttons: 1, clientX: 101, clientY: 100 })
+    fireEvent.mouseMove(window, { buttons: 1, clientX: 180, clientY: 140 })
+    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(80px, 40px)'))
+    fireEvent.mouseUp(window, { button: 0, clientX: 180, clientY: 140 })
   })
 
   it('unlocks every country and French test stage for the Admin profile', () => {

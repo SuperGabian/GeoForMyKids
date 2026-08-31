@@ -93,6 +93,8 @@ export function WorldMap({
   const [pan, setPan] = useState<[number, number]>([0, 0])
   const [isDragging, setIsDragging] = useState(false)
   const mapShellRef = useRef<HTMLDivElement>(null)
+  const worldMapRef = useRef<SVGSVGElement>(null)
+  const mouseDragStart = useRef<{ x: number; y: number; pan: [number, number]; zoom: number } | null>(null)
   const dragStart = useRef<{ x: number; y: number; pan: [number, number] } | null>(null)
   const activePointers = useRef(new Map<number, { x: number; y: number }>())
   const pinchStart = useRef<{
@@ -225,6 +227,40 @@ export function WorldMap({
     mapShell.addEventListener('wheel', handleWheel, { passive: false })
     return () => mapShell.removeEventListener('wheel', handleWheel)
   }, [focus.zoom])
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const start = mouseDragStart.current
+      const map = worldMapRef.current
+      if (!start || !map) return
+      if ((event.buttons & 1) === 0) {
+        mouseDragStart.current = null
+        setIsDragging(false)
+        return
+      }
+
+      const bounds = map.getBoundingClientRect()
+      const scaleX = bounds.width ? 1000 / bounds.width : 1
+      const scaleY = bounds.height ? 550 / bounds.height : 1
+      const deltaX = (event.clientX - start.x) * scaleX
+      const deltaY = (event.clientY - start.y) * scaleY
+      if (Math.abs(deltaX) + Math.abs(deltaY) > 8) didDrag.current = true
+      setPan(clampPan([start.pan[0] + deltaX, start.pan[1] + deltaY], start.zoom))
+    }
+    const handleMouseUp = () => {
+      if (!mouseDragStart.current) return
+      mouseDragStart.current = null
+      setIsDragging(false)
+      window.setTimeout(() => { didDrag.current = false }, 0)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
 
   const panTransform = `translate(${effectivePan[0]}px, ${effectivePan[1]}px)`
   const viewportTransform = `translate(500px, 270px) scale(${effectiveZoom}) translate(${-focus.center[0]}px, ${-focus.center[1]}px)`
@@ -368,10 +404,24 @@ export function WorldMap({
       </div>
 
       <svg
+        ref={worldMapRef}
         className={`world-map ${isDragging ? 'is-dragging' : ''}`}
         viewBox="0 0 1000 550"
         role="group"
+        onMouseDown={(event) => {
+          if (event.button !== 0) return
+          event.preventDefault()
+          mouseDragStart.current = {
+            x: event.clientX,
+            y: event.clientY,
+            pan: effectivePan,
+            zoom: effectiveZoom,
+          }
+          didDrag.current = false
+          setIsDragging(true)
+        }}
         onPointerDown={(event) => {
+          if (event.pointerType === 'mouse') return
           if (event.button !== 0) return
           if (event.isPrimary && activePointers.current.size > 0) {
             for (const pointerId of activePointers.current.keys()) {
@@ -405,6 +455,7 @@ export function WorldMap({
           setIsDragging(true)
         }}
         onPointerMove={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!activePointers.current.has(event.pointerId)) return
           activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
           if (activePointers.current.size >= 2 && pinchStart.current) {
@@ -444,6 +495,7 @@ export function WorldMap({
           setPan(clampPan([dragStart.current.pan[0] + deltaX, dragStart.current.pan[1] + deltaY], effectiveZoom))
         }}
         onPointerUp={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!activePointers.current.delete(event.pointerId)) return
           pinchStart.current = null
           dragStart.current = null
@@ -454,6 +506,7 @@ export function WorldMap({
           if (activePointers.current.size === 0) window.setTimeout(() => { didDrag.current = false }, 0)
         }}
         onPointerCancel={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!activePointers.current.delete(event.pointerId)) return
           pinchStart.current = null
           dragStart.current = null
@@ -461,6 +514,7 @@ export function WorldMap({
           setIsDragging(activePointers.current.size > 0)
         }}
         onLostPointerCapture={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!activePointers.current.delete(event.pointerId)) return
           pinchStart.current = null
           dragStart.current = null
@@ -470,7 +524,7 @@ export function WorldMap({
           }
         }}
         onPointerLeave={() => {
-          if (activePointers.current.size === 0) {
+          if (activePointers.current.size === 0 && !mouseDragStart.current) {
             dragStart.current = null
             setIsDragging(false)
           }

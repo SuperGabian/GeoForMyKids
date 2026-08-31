@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { geoMercator, geoPath } from 'd3-geo'
 import type { FeatureCollection, Geometry } from 'geojson'
 import { Minus, Plus, RotateCcw } from 'lucide-react'
@@ -24,6 +24,8 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState<[number, number]>([0, 0])
   const [dragging, setDragging] = useState(false)
+  const mapRef = useRef<SVGSVGElement>(null)
+  const mouseGestureStart = useRef<{ point: [number, number]; zoom: number; pan: [number, number] } | null>(null)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const gestureStart = useRef<{
     distance?: number
@@ -42,6 +44,38 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
   const path = useMemo(() => geoPath(projection), [projection])
   const effectivePan = clampPan(pan, zoom)
 
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const start = mouseGestureStart.current
+      const map = mapRef.current
+      if (!start || !map) return
+      if ((event.buttons & 1) === 0) {
+        mouseGestureStart.current = null
+        setDragging(false)
+        return
+      }
+      const bounds = map.getBoundingClientRect()
+      const scaleX = bounds.width ? 1000 / bounds.width : 1
+      const scaleY = bounds.height ? 550 / bounds.height : 1
+      const deltaX = (event.clientX - start.point[0]) * scaleX
+      const deltaY = (event.clientY - start.point[1]) * scaleY
+      if (Math.abs(deltaX) + Math.abs(deltaY) > 8) moved.current = true
+      setPan(clampPan([start.pan[0] + deltaX, start.pan[1] + deltaY], start.zoom))
+    }
+    const handleMouseUp = () => {
+      if (!mouseGestureStart.current) return
+      mouseGestureStart.current = null
+      setDragging(false)
+      window.setTimeout(() => { moved.current = false }, 0)
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
+
   return (
     <div className="france-map-shell" aria-label="Carte administrative de la France">
       {onLevelPickerClick ? <button className="france-level-picker" type="button" onClick={onLevelPickerClick}>Niveaux</button> : null}
@@ -51,10 +85,19 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
         <button type="button" aria-label="Réinitialiser le zoom" disabled={zoom === 1 && pan[0] === 0 && pan[1] === 0} onClick={() => { setZoom(1); setPan([0, 0]) }}><RotateCcw size={14} /></button>
       </div>
       <svg
+        ref={mapRef}
         className={`france-map ${dragging ? 'is-dragging' : ''}`}
         viewBox="0 0 1000 550"
         role="group"
+        onMouseDown={(event) => {
+          if (event.button !== 0) return
+          event.preventDefault()
+          mouseGestureStart.current = { point: [event.clientX, event.clientY], zoom, pan: effectivePan }
+          moved.current = false
+          setDragging(true)
+        }}
         onPointerDown={(event) => {
+          if (event.pointerType === 'mouse') return
           if (event.button !== 0) return
           if (event.isPrimary && pointers.current.size > 0) {
             for (const pointerId of pointers.current.keys()) {
@@ -85,6 +128,7 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
           setDragging(true)
         }}
         onPointerMove={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!pointers.current.has(event.pointerId) || !gestureStart.current) return
           pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
           const bounds = event.currentTarget.getBoundingClientRect()
@@ -115,6 +159,7 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
           }
         }}
         onPointerUp={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!pointers.current.delete(event.pointerId)) return
           gestureStart.current = null
           setDragging(pointers.current.size > 0)
@@ -122,12 +167,14 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
           if (!pointers.current.size) window.setTimeout(() => { moved.current = false }, 0)
         }}
         onPointerCancel={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!pointers.current.delete(event.pointerId)) return
           gestureStart.current = null
           moved.current = false
           setDragging(false)
         }}
         onLostPointerCapture={(event) => {
+          if (event.pointerType === 'mouse') return
           if (!pointers.current.delete(event.pointerId)) return
           gestureStart.current = null
           setDragging(pointers.current.size > 0)
