@@ -1441,7 +1441,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                 ? 'Observe la forme et la position des régions françaises.'
                 : gameMode === 'departments'
                   ? `Apprends les départements de la région ${preferredRegion.name}.`
-            : 'Une erreur révèle un indice — il n’y a jamais de mauvaise partie.'}</span>
+            : 'Chaque erreur t’aide à progresser et à mieux réussir la prochaine fois.'}</span>
         <div className="game-footer-actions">
           <button type="button" onClick={() => setScreen('progress')}>{masteredCount} pays bien connus</button>
           <a href="https://github.com/SuperGabian/GeoForMyKids" target="_blank" rel="noreferrer">

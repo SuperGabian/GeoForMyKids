@@ -477,7 +477,7 @@ function genericCountry(source: CatalogCountry): Country {
     continent: source.continent as ContinentCode,
     continentName: source.continentName,
     capital: source.capital,
-    languages: source.languages.map((language) => languageNames[language] ?? language).join(', ') || '—',
+    languages: source.languages.map((language) => languageNames[language] ?? language).join(', ') || 'Non renseigné',
     population: population.label,
     populationSource: population.source,
     fact: countryFacts[source.iso2] ?? `${source.name} possède une géographie et une histoire qui lui sont propres.`,
