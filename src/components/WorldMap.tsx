@@ -363,6 +363,9 @@ export function WorldMap({
         onPointerDown={(event) => {
           if (event.button !== 0) return
           activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+          if (!event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+            event.currentTarget.setPointerCapture?.(event.pointerId)
+          }
           if (activePointers.current.size === 2) {
             const [first, second] = [...activePointers.current.values()]
             pinchStart.current = {
@@ -438,7 +441,7 @@ export function WorldMap({
           setIsDragging(activePointers.current.size > 0)
         }}
         onPointerLeave={() => {
-          if (!didDrag.current) {
+          if (activePointers.current.size === 0) {
             dragStart.current = null
             setIsDragging(false)
           }

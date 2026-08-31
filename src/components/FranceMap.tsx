@@ -57,6 +57,9 @@ export function FranceMap({ areas, targetCode, selectedCode, isCorrect, disabled
         onPointerDown={(event) => {
           if (event.button !== 0) return
           pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+          if (!event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+            event.currentTarget.setPointerCapture?.(event.pointerId)
+          }
           const values = [...pointers.current.values()]
           if (values.length === 2) {
             gestureStart.current = {

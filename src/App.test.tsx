@@ -417,20 +417,29 @@ describe('GeoForMyKids game loop', () => {
     expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(-44px, 0px)'))
 
     const svg = document.querySelector<SVGSVGElement>('.world-map')!
-    fireEvent(svg, new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: 100 }))
-    fireEvent(svg, new MouseEvent('pointermove', { bubbles: true, clientX: 140, clientY: 125 }))
-    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(-4px, 25px)'))
-    fireEvent(svg, new MouseEvent('pointerup', { bubbles: true }))
-
-    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser le zoom' }))
-    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(0px, 0px)'))
-    expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('translate(500px, 270px) scale(1)'))
-
     const pointer = (type: string, pointerId: number, clientX: number, clientY: number) => {
       const event = new MouseEvent(type, { bubbles: true, button: 0, clientX, clientY })
       Object.defineProperty(event, 'pointerId', { value: pointerId })
       return event
     }
+    const capturedPointers = new Set<number>()
+    const capturePointer = vi.fn((pointerId: number) => capturedPointers.add(pointerId))
+    Object.defineProperties(svg, {
+      setPointerCapture: { configurable: true, value: capturePointer },
+      hasPointerCapture: { configurable: true, value: (pointerId: number) => capturedPointers.has(pointerId) },
+      releasePointerCapture: { configurable: true, value: (pointerId: number) => capturedPointers.delete(pointerId) },
+    })
+
+    fireEvent(svg, pointer('pointerdown', 1, 100, 100))
+    expect(capturePointer).toHaveBeenCalledWith(1)
+    fireEvent(svg, pointer('pointermove', 1, 140, 125))
+    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(-4px, 25px)'))
+    fireEvent(svg, pointer('pointerup', 1, 140, 125))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser le zoom' }))
+    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(0px, 0px)'))
+    expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('translate(500px, 270px) scale(1)'))
+
     fireEvent(svg, pointer('pointerdown', 1, 100, 100))
     fireEvent(svg, pointer('pointerdown', 2, 200, 100))
     fireEvent(svg, pointer('pointermove', 2, 300, 100))
@@ -492,7 +501,7 @@ describe('GeoForMyKids game loop', () => {
         fireEvent(regionButton, pointer('pointerdown'))
         fireEvent(regionButton, pointer('pointerup'))
         fireEvent.click(regionButton)
-        expect(capturePointer).not.toHaveBeenCalled()
+        expect(capturePointer).toHaveBeenCalledWith(1)
         expect(document.activeElement).not.toBe(regionButton)
       } else {
         fireEvent.click(regionButton)
