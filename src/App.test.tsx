@@ -373,6 +373,26 @@ describe('GeoForMyKids game loop', () => {
     expect(document.querySelector('.map-wrong-choice')).toHaveTextContent('Slovaquie')
   })
 
+  it('shows and selects Singapore even though it is absent from the simplified world map', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.level-six-checkpoint.completed.v1', 'true')
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
+      countries
+        .filter((country) => country.difficulty <= 9 && country.iso2 !== 'SG')
+        .map((country) => [country.iso2, { encounters: 1, stage: 3, needsReview: false }]),
+    )))
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Singapour' })).toBeInTheDocument()
+    const singapore = screen.getByRole('button', { name: 'Singapour' })
+    expect(singapore).toHaveClass('micro-country-marker')
+    expect(singapore.querySelector('.micro-country-dot')).toBeInTheDocument()
+    expect(document.querySelector('.target-hit-area')).toBeInTheDocument()
+
+    fireEvent.click(singapore)
+    expect(document.querySelector('.success-card')).toHaveTextContent('Singapour')
+  })
+
   it('lets the player adjust and reset the map zoom', () => {
     completeTutorials()
     render(<App />)

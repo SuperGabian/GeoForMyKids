@@ -705,6 +705,10 @@ button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
 .tutorial-fact strong { font-size: 11px; }
 .tutorial-fact p { margin: 4px 0 0; font-size: 11px; line-height: 1.48; }
 .target-hit-area { fill: transparent; pointer-events: auto; cursor: pointer; }
+.micro-country-marker { cursor: pointer; outline: none; }
+.micro-country-dot { stroke: rgba(255, 255, 255, .98); stroke-width: 1.4; pointer-events: none; }
+.micro-country-hit-area { fill: transparent; pointer-events: auto; }
+.micro-country-dot.is-marker-hovered { filter: brightness(1.08) saturate(1.2) drop-shadow(0 2px 2px rgba(29, 65, 62, .3)); stroke-width: 2; }
 
 .map-tooltip {
   position: absolute;

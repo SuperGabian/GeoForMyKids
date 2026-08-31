@@ -5,7 +5,7 @@ import type { Feature, FeatureCollection, Geometry } from 'geojson'
 import { Maximize2, Minus, Plus, RotateCcw } from 'lucide-react'
 import worldTopology from 'world-atlas/countries-110m.json'
 import mapMetadata from '../data/map-countries.json'
-import { countryByNumericId, type ContinentCode } from '../data/countries'
+import { countries, countryByNumericId, type ContinentCode } from '../data/countries'
 import { CountryFlag } from './CountryFlag'
 import { oceans, type OceanCode } from '../data/oceans'
 import { seas, type SeaCode } from '../data/seas'
@@ -152,6 +152,11 @@ export function WorldMap({
       }]
     })
   }, [])
+
+  const unmappedCountries = useMemo(() => {
+    const mappedIsoCodes = new Set(mapCountries.map((country) => country.iso2))
+    return countries.filter((country) => !mappedIsoCodes.has(country.iso2))
+  }, [mapCountries])
 
   const marker = projection(targetLabel)
   const hoveredCountry = mapCountries.find((country) => country.iso2 === hoveredCountryIso)
@@ -534,6 +539,84 @@ export function WorldMap({
             )
             })}
           </g>
+
+          {gameMode !== 'oceans' && gameMode !== 'seas' ? (
+            <g className="micro-country-markers">
+              {unmappedCountries.map((country) => {
+                const point = projection(country.label)
+                if (!point) return null
+
+                const isTarget = country.iso2 === targetIso
+                const isLast = country.iso2 === lastSelectedIso
+                const isTutorialContinent = gameMode === 'continents' && country.continent === targetContinent
+                const isHoveredContinent = gameMode === 'continents' && country.continent === hoveredContinent
+                const isWrongContinent = gameMode === 'continents' && !isCorrect && lastSelectedContinent === country.continent
+                const select = () => {
+                  if (!disabled) onSelect(country.iso2, country.name, country.continent)
+                }
+
+                const dotClassName = [
+                  'country-shape',
+                  'micro-country-dot',
+                  `continent-${country.continent.toLowerCase()}`,
+                  hoveredCountryIso === country.iso2 ? 'is-marker-hovered' : '',
+                  isCorrect && gameMode === 'country' && isTarget ? 'is-correct' : '',
+                  isCorrect && isTutorialContinent ? 'is-continent-correct' : '',
+                  isHoveredContinent ? 'is-continent-hovered' : '',
+                  gameMode === 'country' && !isCorrect && isLast ? 'is-wrong' : '',
+                  isWrongContinent ? 'is-continent-wrong' : '',
+                ].filter(Boolean).join(' ')
+
+                return (
+                  <g
+                    className="micro-country-marker"
+                    role="button"
+                    tabIndex={disabled ? -1 : 0}
+                    aria-label={country.name}
+                    aria-disabled={disabled}
+                    key={country.iso2}
+                    onMouseEnter={() => {
+                      setHoveredCountryIso(country.iso2)
+                      if (gameMode === 'continents') setHoveredContinent(country.continent)
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredCountryIso(undefined)
+                      if (gameMode === 'continents') setHoveredContinent(undefined)
+                    }}
+                    onFocus={() => {
+                      setHoveredCountryIso(country.iso2)
+                      if (gameMode === 'continents') setHoveredContinent(country.continent)
+                    }}
+                    onBlur={() => {
+                      setHoveredCountryIso(undefined)
+                      if (gameMode === 'continents') setHoveredContinent(undefined)
+                    }}
+                    onClick={select}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        select()
+                      }
+                    }}
+                  >
+                    <circle
+                      className={dotClassName}
+                      cx={point[0]}
+                      cy={point[1]}
+                      r={4.2 / effectiveZoom}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <circle
+                      className="micro-country-hit-area"
+                      cx={point[0]}
+                      cy={point[1]}
+                      r={7 / effectiveZoom}
+                    />
+                  </g>
+                )
+              })}
+            </g>
+          ) : null}
 
           {gameMode === 'seas' ? (
             <g className="sea-zones">

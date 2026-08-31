@@ -240,7 +240,7 @@ export const countriesByDifficulty: Record<CountryDifficulty, readonly string[]>
     'IS', // Islande
     'PH', // Philippines
     'MY', // Malaisie
-    'SG', // Singapour
+    'LU', // Luxembourg
     'IR', // Iran
     'IQ', // Irak
     'MG', // Madagascar
@@ -322,7 +322,6 @@ export const countriesByDifficulty: Record<CountryDifficulty, readonly string[]>
     'LA', // Laos
     'LK', // Sri Lanka
     'LT', // Lituanie
-    'LU', // Luxembourg
     'LV', // Lettonie
     'MD', // Moldavie
     'MV', // Maldives
@@ -335,6 +334,7 @@ export const countriesByDifficulty: Record<CountryDifficulty, readonly string[]>
     'MZ', // Mozambique
     'MR', // Mauritanie
     'MU', // Île Maurice
+    'SG', // Singapour
   ],
   10: [
     'NA', // Namibie
