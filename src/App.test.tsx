@@ -262,6 +262,16 @@ describe('GeoForMyKids game loop', () => {
     expect(screen.getByRole('progressbar', { name: 'Progression du niveau 1' })).toHaveAttribute('aria-valuenow', '1')
   })
 
+  it('links to the public GitHub project from the footer', () => {
+    completeTutorials()
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: 'Voir le projet sur GitHub' })).toHaveAttribute(
+      'href',
+      'https://github.com/SuperGabian/GeoForMyKids',
+    )
+  })
+
   it('marks a country well known on the first try and removes that status after a later mistake', () => {
     completeTutorials()
     const firstJourney = render(<App />)
@@ -343,6 +353,24 @@ describe('GeoForMyKids game loop', () => {
     fireEvent.mouseEnter(assistedHitArea)
 
     expect(document.querySelector('.country-hover-line')).toHaveAttribute('d', japan.getAttribute('d'))
+  })
+
+  it('does not let the Czech assisted area cover Austria or Slovakia', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(
+      countries
+        .filter((country) => country.difficulty <= 6 && country.iso2 !== 'CZ')
+        .map((country) => [country.iso2, { encounters: 1, stage: 3, needsReview: false }]),
+    )))
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Tchéquie' })).toBeInTheDocument()
+    expect(document.querySelector('.target-hit-area')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Autriche' }))
+    expect(document.querySelector('.map-wrong-choice')).toHaveTextContent('Autriche')
+    fireEvent.click(screen.getByRole('button', { name: 'Slovaquie' }))
+    expect(document.querySelector('.map-wrong-choice')).toHaveTextContent('Slovaquie')
   })
 
   it('lets the player adjust and reset the map zoom', () => {

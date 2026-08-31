@@ -155,6 +155,10 @@ export function WorldMap({
 
   const marker = projection(targetLabel)
   const hoveredCountry = mapCountries.find((country) => country.iso2 === hoveredCountryIso)
+  const targetCountry = mapCountries.find((country) => country.iso2 === targetIso)
+  const targetNeedsAssistedHitArea = !targetCountry
+    || targetCountry.geometry.geometry.type === 'MultiPolygon'
+    || path.area(targetCountry.geometry) < 10
   const lastSelectedContinent = mapCountries.find((country) => country.iso2 === lastSelectedIso)?.continent
   const calculateFocus = (level: number) => {
     if (level === 0) {
@@ -569,7 +573,7 @@ export function WorldMap({
             </g>
           ) : null}
 
-          {gameMode === 'country' && !isCorrect && marker ? (
+          {gameMode === 'country' && !isCorrect && marker && targetNeedsAssistedHitArea ? (
             <circle
               className="target-hit-area"
               cx={marker[0]}

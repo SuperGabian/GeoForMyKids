@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, ChevronRight, Globe2, Lightbulb, Map, RotateCcw, Sparkles, Users } from 'lucide-react'
+import { ArrowRight, ChevronRight, GitFork, Globe2, Lightbulb, Map, RotateCcw, Sparkles, Users } from 'lucide-react'
 import { WorldMap } from './components/WorldMap'
 import { SuccessCard } from './components/SuccessCard'
 import { CountryFlag } from './components/CountryFlag'
@@ -1442,7 +1442,12 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
                 : gameMode === 'departments'
                   ? `Apprends les départements de la région ${preferredRegion.name}.`
             : 'Une erreur révèle un indice — il n’y a jamais de mauvaise partie.'}</span>
-        <button type="button" onClick={() => setScreen('progress')}>{masteredCount} pays bien connus</button>
+        <div className="game-footer-actions">
+          <button type="button" onClick={() => setScreen('progress')}>{masteredCount} pays bien connus</button>
+          <a href="https://github.com/SuperGabian/GeoForMyKids" target="_blank" rel="noreferrer">
+            <GitFork size={13} aria-hidden="true" />Voir le projet sur GitHub
+          </a>
+        </div>
       </footer>
 
       {showLevelPicker ? (
