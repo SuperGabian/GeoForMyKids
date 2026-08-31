@@ -419,17 +419,22 @@ describe('GeoForMyKids game loop', () => {
     expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(-44px, 0px)'))
 
     const svg = document.querySelector<SVGSVGElement>('.world-map')!
-    const pointer = (type: string, pointerId: number, clientX: number, clientY: number) => {
+    const pointer = (type: string, pointerId: number, clientX: number, clientY: number, isPrimary = true) => {
       const event = new MouseEvent(type, { bubbles: true, button: 0, clientX, clientY })
-      Object.defineProperty(event, 'pointerId', { value: pointerId })
+      Object.defineProperties(event, {
+        pointerId: { value: pointerId },
+        pointerType: { value: 'touch' },
+        isPrimary: { value: isPrimary },
+      })
       return event
     }
     const capturedPointers = new Set<number>()
     const capturePointer = vi.fn((pointerId: number) => capturedPointers.add(pointerId))
+    const releasePointer = vi.fn((pointerId: number) => capturedPointers.delete(pointerId))
     Object.defineProperties(svg, {
       setPointerCapture: { configurable: true, value: capturePointer },
       hasPointerCapture: { configurable: true, value: (pointerId: number) => capturedPointers.has(pointerId) },
-      releasePointerCapture: { configurable: true, value: (pointerId: number) => capturedPointers.delete(pointerId) },
+      releasePointerCapture: { configurable: true, value: releasePointer },
     })
 
     fireEvent(svg, pointer('pointerdown', 1, 100, 100))
@@ -443,11 +448,21 @@ describe('GeoForMyKids game loop', () => {
     expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('translate(500px, 270px) scale(1)'))
 
     fireEvent(svg, pointer('pointerdown', 1, 100, 100))
-    fireEvent(svg, pointer('pointerdown', 2, 200, 100))
-    fireEvent(svg, pointer('pointermove', 2, 300, 100))
+    fireEvent(svg, pointer('pointerdown', 2, 200, 100, false))
+    fireEvent(svg, pointer('pointermove', 2, 300, 100, false))
     expect(document.querySelector('.map-viewport')).toHaveAttribute('style', expect.stringContaining('scale(2)'))
     fireEvent(svg, pointer('pointerup', 1, 100, 100))
-    fireEvent(svg, pointer('pointerup', 2, 300, 100))
+    fireEvent(svg, pointer('pointerup', 2, 300, 100, false))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser le zoom' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Zoomer' }))
+    fireEvent(svg, pointer('pointerdown', 10, 100, 100))
+    fireEvent(svg, pointer('pointermove', 10, 101, 100))
+    fireEvent(svg, pointer('pointerdown', 11, 100, 100))
+    expect(releasePointer).toHaveBeenCalledWith(10)
+    fireEvent(svg, pointer('pointermove', 11, 140, 100))
+    expect(document.querySelector('.map-pan-viewport')).toHaveAttribute('style', expect.stringContaining('translate(41px, 0px)'))
+    fireEvent(svg, pointer('pointerup', 11, 140, 100))
   })
 
   it('unlocks every country and French test stage for the Admin profile', () => {

@@ -56,6 +56,15 @@ export function FranceRiversMap({ rivers, targetCode, selectedCode, isCorrect, d
         role="group"
         onPointerDown={(event) => {
           if (event.button !== 0) return
+          if (event.isPrimary && pointers.current.size > 0) {
+            for (const pointerId of pointers.current.keys()) {
+              if (event.currentTarget.hasPointerCapture?.(pointerId)) {
+                event.currentTarget.releasePointerCapture?.(pointerId)
+              }
+            }
+            pointers.current.clear()
+            gestureStart.current = null
+          }
           pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
           if (!event.currentTarget.hasPointerCapture?.(event.pointerId)) {
             event.currentTarget.setPointerCapture?.(event.pointerId)
@@ -106,17 +115,23 @@ export function FranceRiversMap({ rivers, targetCode, selectedCode, isCorrect, d
           }
         }}
         onPointerUp={(event) => {
-          pointers.current.delete(event.pointerId)
+          if (!pointers.current.delete(event.pointerId)) return
           gestureStart.current = null
           setDragging(pointers.current.size > 0)
           if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture?.(event.pointerId)
           if (!pointers.current.size) window.setTimeout(() => { moved.current = false }, 0)
         }}
         onPointerCancel={(event) => {
-          pointers.current.delete(event.pointerId)
+          if (!pointers.current.delete(event.pointerId)) return
           gestureStart.current = null
           moved.current = false
           setDragging(false)
+        }}
+        onLostPointerCapture={(event) => {
+          if (!pointers.current.delete(event.pointerId)) return
+          gestureStart.current = null
+          setDragging(pointers.current.size > 0)
+          if (!pointers.current.size) window.setTimeout(() => { moved.current = false }, 0)
         }}
         onClickCapture={(event) => {
           if (!moved.current) return

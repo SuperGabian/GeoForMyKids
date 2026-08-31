@@ -373,6 +373,16 @@ export function WorldMap({
         role="group"
         onPointerDown={(event) => {
           if (event.button !== 0) return
+          if (event.isPrimary && activePointers.current.size > 0) {
+            for (const pointerId of activePointers.current.keys()) {
+              if (event.currentTarget.hasPointerCapture?.(pointerId)) {
+                event.currentTarget.releasePointerCapture?.(pointerId)
+              }
+            }
+            activePointers.current.clear()
+            pinchStart.current = null
+            dragStart.current = null
+          }
           activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
           if (!event.currentTarget.hasPointerCapture?.(event.pointerId)) {
             event.currentTarget.setPointerCapture?.(event.pointerId)
@@ -395,9 +405,8 @@ export function WorldMap({
           setIsDragging(true)
         }}
         onPointerMove={(event) => {
-          if (activePointers.current.has(event.pointerId)) {
-            activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-          }
+          if (!activePointers.current.has(event.pointerId)) return
+          activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
           if (activePointers.current.size >= 2 && pinchStart.current) {
             for (const pointerId of activePointers.current.keys()) {
               if (!event.currentTarget.hasPointerCapture?.(pointerId)) event.currentTarget.setPointerCapture?.(pointerId)
@@ -435,7 +444,7 @@ export function WorldMap({
           setPan(clampPan([dragStart.current.pan[0] + deltaX, dragStart.current.pan[1] + deltaY], effectiveZoom))
         }}
         onPointerUp={(event) => {
-          activePointers.current.delete(event.pointerId)
+          if (!activePointers.current.delete(event.pointerId)) return
           pinchStart.current = null
           dragStart.current = null
           setIsDragging(activePointers.current.size > 0)
@@ -445,11 +454,20 @@ export function WorldMap({
           if (activePointers.current.size === 0) window.setTimeout(() => { didDrag.current = false }, 0)
         }}
         onPointerCancel={(event) => {
-          activePointers.current.delete(event.pointerId)
+          if (!activePointers.current.delete(event.pointerId)) return
           pinchStart.current = null
           dragStart.current = null
           didDrag.current = false
           setIsDragging(activePointers.current.size > 0)
+        }}
+        onLostPointerCapture={(event) => {
+          if (!activePointers.current.delete(event.pointerId)) return
+          pinchStart.current = null
+          dragStart.current = null
+          setIsDragging(activePointers.current.size > 0)
+          if (activePointers.current.size === 0) {
+            window.setTimeout(() => { didDrag.current = false }, 0)
+          }
         }}
         onPointerLeave={() => {
           if (activePointers.current.size === 0) {
