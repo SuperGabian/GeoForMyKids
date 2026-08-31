@@ -713,6 +713,36 @@ describe('GeoForMyKids game loop', () => {
     expect(localStorage.getItem('globidoo.level-six-checkpoint.completed.v1')).toBe('true')
   })
 
+  it('shows the level 6 checkpoint when Admin finishes its replay', () => {
+    completeTutorials()
+    localStorage.setItem('globidoo.profiles.v1', JSON.stringify([{ id: 'default', name: 'Admin' }]))
+    localStorage.setItem('globidoo.level-six-checkpoint.completed.v1', 'true')
+    localStorage.setItem('globidoo.progress.v1', JSON.stringify({
+      ...Object.fromEntries(
+        countries
+          .filter((country) => country.difficulty <= 7)
+          .map((country) => [country.iso2, { encounters: 1, stage: 3, needsReview: false }]),
+      ),
+      FR: { encounters: 1, stage: 1, needsReview: true },
+    }))
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir un niveau' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Refaire le niveau 6' }))
+
+    countries
+      .filter((country) => country.difficulty === 6)
+      .forEach((country) => {
+        expect(screen.getByRole('heading', { name: country.name })).toBeInTheDocument()
+        fireEvent.click(screen.getByRole('button', { name: country.name }))
+        fireEvent.click(screen.getByRole('button', { name: /Pays suivant/ }))
+      })
+
+    expect(screen.getByRole('dialog', { name: 'Bravo, explorateur !' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Réviser les pays à consolider/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Accéder au niveau 7' })).toBeInTheDocument()
+  })
+
   it('opens previous levels from the progress bar and flags a mastered country for review', () => {
     completeTutorials()
     localStorage.setItem('globidoo.progress.v1', JSON.stringify(Object.fromEntries(

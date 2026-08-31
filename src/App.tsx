@@ -299,8 +299,7 @@ function countriesDueForReview(progress: CountryProgress, completedLevel: Countr
   })
 }
 
-function levelSixCheckpointIsPending(progress: CountryProgress, profileId: string, isAdmin = false) {
-  if (isAdmin) return false
+function levelSixCheckpointIsPending(progress: CountryProgress, profileId: string) {
   try {
     if (localStorage.getItem(profileStorageKey(LEVEL_SIX_CHECKPOINT_KEY, profileId)) === 'true') return false
   } catch {
@@ -436,7 +435,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
   const [foundationProgress, setFoundationProgress] = useState<FoundationProgress>(() => loadFoundationProgress(activeProfile.id))
   const [preferredRegionCode, setPreferredRegionCode] = useState(() => loadPreferredRegion(activeProfile.id))
   const [gameMode, setGameMode] = useState<GameMode>(() => initialMode(progress, foundationProgress, activeProfile.id, isAdmin))
-  const checkpointPendingAtStart = levelSixCheckpointIsPending(progress, activeProfile.id, isAdmin)
+  const checkpointPendingAtStart = levelSixCheckpointIsPending(progress, activeProfile.id)
   const [journeyStart] = useState(() => createJourneyStart(progress, checkpointPendingAtStart))
   const initiallyCompleted = gameMode === 'country'
     && countries.every((country) => progress[country.iso2]?.encounters)
@@ -810,6 +809,15 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
         return
       }
 
+      if (isAdmin && replaySession.level === 6) {
+        const levelSevenCountry = countries.find((country) => country.difficulty === 7)
+        setReplaySession(undefined)
+        if (levelSevenCountry) setCountryTarget(levelSevenCountry)
+        setGameMode('country')
+        setShowLevelSixCheckpoint(true)
+        return
+      }
+
       setCountryTarget(countryByIso[replaySession.returnCountryIso])
       if (replaySession.returnMode) {
         setGameMode(replaySession.returnMode)
@@ -862,8 +870,7 @@ function ProfileGame({ activeProfile, profiles, onSelectProfile, onCreateProfile
     const next = chooseNextCountry(countryTarget, progress)
     const levelFinished = !next || next.difficulty > countryTarget.difficulty
     if (levelFinished) {
-      if (!isAdmin
-        && countryTarget.difficulty === 6
+      if (countryTarget.difficulty === 6
         && next?.difficulty === 7
         && localStorage.getItem(profileStorageKey(LEVEL_SIX_CHECKPOINT_KEY, activeProfile.id)) !== 'true') {
         setCountryTarget(next)
